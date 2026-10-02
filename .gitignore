@@ -5,4 +5,7 @@ __pycache__/
 *.pyc
 
 
-data/
+data/*.gz
+data/FashionMNIST
+data/MNIST
+data/cifar-10-batches-py
