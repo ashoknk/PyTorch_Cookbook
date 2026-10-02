@@ -52,7 +52,9 @@ class LogisticRegressionModel(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
-        return self.sigmoid(self.linear(x))
+        logits = self.linear(x)
+        sig_out = self.sigmoid(logits)
+        return sig_out
 
 def main():
     # ==========================================
@@ -63,12 +65,17 @@ def main():
     # Create 150 samples in 2D space grouped into 2 distinct clusters
     # https://sklearn.org/stable/datasets/sample_generators.html
     # https://sklearn.org/stable/modules/generated/sklearn.datasets.make_blobs.html#sklearn.datasets.make_blobs
-    raw_X, raw_y = make_blobs(n_samples=150, centers=2, n_features=2, random_state=42, cluster_std=1.2)
+    # n_samples - Total number of data points generated
+    # n_features - Number of input dimensions
+    # centers - Number of classes (labels 0 and 1)
+    num_features=2
+    raw_X, raw_y = make_blobs(n_samples=150, centers=2, n_features=num_features, random_state=42, cluster_std=1.2)
     
     # Convert numpy arrays to float tensors. PyTorch models expect float32 inputs by default.
     X = torch.tensor(raw_X, dtype=torch.float32)
-    # We reshape the label tensor to have an explicit second dimension of size 1 (shape [150, 1])
+    # We reshape the label tensor to have an explicit second dimension of size 1 (shape [150, 1]). The -1 tells PyTorch: "Do the algebra for me!
     y = torch.tensor(raw_y, dtype=torch.float32).view(-1, 1)
+    print("raw_X.shape:", raw_X.shape, "X.shape:", X.shape)
     print("raw_y.shape:", raw_y.shape, "y.shape:", y.shape)
     
     # ==========================================
@@ -76,7 +83,7 @@ def main():
     # ==========================================
     print("--- Initializing Logistic Regression Model ---")
     # 2 inputs mapping to 1 class output probability
-    model = LogisticRegressionModel(num_features=2)
+    model = LogisticRegressionModel(num_features=num_features)
 
     # We use Binary Cross-Entropy (BCE) loss because we are doing binary classification.
     # Documentation: https://pytorch.org/docs/stable/generated/torch.nn.BCELoss.html
@@ -131,7 +138,9 @@ def main():
         # if it is actively being tracked for gradients.
         predictions = model(X)
         print("\n--- Final Predictions (Probabilities) ---")
-        print(predictions[:5])  # Show first 5 predictions for brevity
+        for pred in predictions[:5]:
+            print(f"[{pred.item():.4f}]")
+        # print(predictions[:5])  # Show first 5 predictions for brevity
         # Apply binary decision threshold of 0.5: scores >= 0.5 are labeled as 1, otherwise 0
         predicted_classes = (predictions >= 0.5).float()
         print(f"Predicted Classes:\n{predicted_classes[:5]}")  # Show first 5 predicted classes for brevity
@@ -146,8 +155,6 @@ def main():
     # ==========================================
     print("--- Saving Decision Boundary Visualization ---")
     # Extract weight and bias parameters
-    # The decision boundary is the line where: w1*x1 + w2*x2 + b = 0
-    # Solving for x2 gives: x2 = -(w1 * x1 + b) / w2
     # By default, PyTorch model parameters (weight and bias) have a property called requires_grad=True. i.e. actively tracking every mathematical operation done
     # .detach() creates a new view of the tensor that hides it from the history tracker, effectively saying, "I just want the current raw values; stop tracking gradients for this copy."
     # .numpy() explicitly converts that PyTorch tensor into a standard NumPy ndarray.
@@ -161,6 +168,11 @@ def main():
     x1_line = np.linspace(x1_min, x1_max, 100)
     
     # 3. Calculate the matching x2 from x1 values to draw the straight decision line
+    # weights[0] is the coefficient for feature 1 (x1)
+    # weights[1] is the coefficient for feature 2 (x2)
+    # The model's linear score is weights[0] * x1 + weights[1] * x2 + bias.
+    # Solving for x2 gives: x2 = -(weights[0] * x1 + bias) / weights[1].
+
     x2_line = -(weights[0] * x1_line + bias) / weights[1]
 
     # 4. Plot the data points (Blue for Class 0, Orange for Class 1)

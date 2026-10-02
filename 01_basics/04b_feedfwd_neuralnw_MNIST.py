@@ -1,4 +1,7 @@
 """
+
+04b. Feedforward Neural Network (MLP) with PyTorch - MNIST Dataset
+
 Purpose:
     This script demonstrates how to load, preprocess, and batch an image dataset (MNIST) 
     using PyTorch and Torchvision. It prepares raw grayscale digit images for a neural 
@@ -7,10 +10,11 @@ Purpose:
 Datasets & DataLoaders:
     Code for processing data samples can get messy and hard to maintain; we ideally want our 
     dataset code to be decoupled from our model training code for better readability and modularity. 
-    PyTorch provides two data primitives: torch.utils.data.DataLoader 
-    and torch.utils.data.Dataset that allow you to use pre-loaded datasets as well as your own data. 
-    Dataset stores the samples and their corresponding labels, and DataLoader wraps an iterable 
-    around the Dataset to enable easy access to the samples.
+    PyTorch provides two data primitives: 
+        torch.utils.data.DataLoader and torch.utils.data.Dataset 
+        that allow you to use pre-loaded datasets as well as your own data. 
+    Dataset stores the samples and their corresponding labels, 
+    and DataLoader wraps an iterable around the Dataset to enable easy access to the samples.
     https://docs.pytorch.org/tutorials/beginner/basics/data_tutorial.html
 
 Data Processing Pipeline & Flow:
@@ -94,15 +98,23 @@ if __name__ == "__main__":
 
 Think of this tensor as a box containing 64 individual image cards stacked together:
 
-`64` (Batch Size): The number of separate images bundled into this single batch. Your `DataLoader` grabbed 64 images at once to pass to the model.
-`1` (Channels): The color depth of each image. Because MNIST consists of black-and-white (grayscale) handwritten digits, each image has 1 channel (shades of gray). Standard color photos (RGB) would have 3 channels (Red, Green, Blue).
-`28` (Height): The vertical resolution of the image. The image is 28 pixels tall from top to bottom.
-`28` (Width): The horizontal resolution of the image. The image is 28 pixels wide from left to right.
+`64` (Batch Size): 
+    The number of separate images bundled into this single batch. 
+    Your `DataLoader` grabbed 64 images at once to pass to the model.
+`1` (Channels): 
+    The color depth of each image. 
+    Because MNIST consists of black-and-white (grayscale) handwritten digits, each image has 1 channel (shades of gray). 
+    Standard color photos (RGB) would have 3 channels (Red, Green, Blue).
+`28` (Height): 
+    The vertical resolution of the image. The image is 28 pixels tall from top to bottom.
+`28` (Width): 
+    The horizontal resolution of the image. The image is 28 pixels wide from left to right.
 
 
 2. `labels.shape` -> `torch.Size([64])`
 
-`64` (Labels): This is a 1D array containing 64 single numbers.
-* Each number is the answer key (ground truth) for the corresponding image in the batch.
-* If image `#1` shows a handwritten digit "7", the first label in this tensor will be the integer `7`.
+`64` (Labels): 
+    This is a 1D array containing 64 single numbers.
+    Each number is the answer key (ground truth) for the corresponding image in the batch.
+    If image `#1` shows a handwritten digit "7", the first label in this tensor will be the integer `7`.
 """    

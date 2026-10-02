@@ -36,6 +36,13 @@ class SimpleMLP(nn.Module):
     def forward(self, x):
         return self.fc(x)
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+MODEL_DIR = os.path.join(DATA_DIR, "models")
+WEIGHTS_PATH = os.path.join(MODEL_DIR, "model_weights.pth")
+CHECKPOINT_PATH = os.path.join(MODEL_DIR, "checkpoint.tar") 
+
+
 def main():
     print("--- 1. Initializing Model & Optimizer ---")
     model = SimpleMLP()
@@ -43,37 +50,37 @@ def main():
     
     # Let's inspect the weights before any changes to verify later
     original_bias = model.fc.bias.clone().detach()
-    print(f"Original bias weights: {original_bias}")
+    print(f"Original bias weights: {original_bias} Type:{type(original_bias)}")
+    # A detached copy of the bias is a regular torch.Tensor, not a trainable model parameter.
 
     # ==========================================
     # 2. SAVING & LOADING WEIGHTS ONLY (STATE_DICT)
     # ==========================================
     print("\n--- 2. Saving State Dict (Weights Only) ---")
-    os.makedirs("./models", exist_ok=True)
-    weights_path = "./models/model_weights.pth"
+    os.makedirs(MODEL_DIR, exist_ok=True)
     
     # A state_dict is a Python dictionary mapping each layer name to its parameter tensor.
     # We save only this dictionary for production deployment as it is highly efficient.
     # Documentation: https://pytorch.org/tutorials/beginner/saving_loading_models.html
-    torch.save(model.state_dict(), weights_path)
-    print(f"Saved state_dict to {weights_path}")
+    torch.save(model.state_dict(), WEIGHTS_PATH)
+    print(f"Saved state_dict to {WEIGHTS_PATH}")
 
     # To restore: create an instance of the exact same network structure first
     new_model = SimpleMLP()
     # Then load the saved weights mapping into the structure
-    new_model.load_state_dict(torch.load(weights_path))
+    new_model.load_state_dict(torch.load(WEIGHTS_PATH))
     print("Successfully reloaded state_dict into new model instance.")
-
+    
     # ==========================================
     # 3. SAVING & LOADING FULL CHECKPOINTS
     # ==========================================
     print("\n--- 3. Saving Complete Training Checkpoint ---")
-    checkpoint_path = "./models/checkpoint.tar"
     
     # We modify model weights to simulate a dummy training step
     with torch.no_grad():
         model.fc.bias.fill_(5.0)
-    print(f"Simulated updated bias weights: {model.fc.bias}")
+    print(f"Simulated updated bias weights: {model.fc.bias} Type:{type(model.fc.bias)}")
+    # Parameter is a special kind of tensor, tracks for training; displays includes requires_grad=True.
 
     # A complete checkpoint should contain model state, optimizer state, current epoch, and loss
     # so we can fully reconstruct the training state.
@@ -83,15 +90,15 @@ def main():
         'optimizer_state_dict': optimizer.state_dict(),
         'loss': 0.1234
     }
-    torch.save(checkpoint, checkpoint_path)
-    print(f"Saved full checkpoint to {checkpoint_path}")
+    torch.save(checkpoint, CHECKPOINT_PATH)
+    print(f"Saved full checkpoint to {CHECKPOINT_PATH}")
 
     # To restore and resume training:
     resume_model = SimpleMLP()
     resume_optimizer = optim.SGD(resume_model.parameters(), lr=0.01)
     
     # Read the checkpoint dictionary from disk
-    loaded_checkpoint = torch.load(checkpoint_path)
+    loaded_checkpoint = torch.load(CHECKPOINT_PATH)
     
     # Map the stored state dictionaries back to their active containers
     resume_model.load_state_dict(loaded_checkpoint['model_state_dict'])
@@ -114,15 +121,15 @@ def main():
     # storage pointers to the CPU memory layout.
     # Documentation: https://pytorch.org/docs/stable/generated/torch.load.html
     cpu_device = torch.device('cpu')
-    loaded_state_dict = torch.load(weights_path, map_location=cpu_device)
+    loaded_state_dict = torch.load(WEIGHTS_PATH, map_location=cpu_device)
     cpu_model = SimpleMLP()
     cpu_model.load_state_dict(loaded_state_dict)
     print("Loaded model saved on accelerator device directly onto CPU.")
 
     # Clean up serialized models
-    os.remove(weights_path)
-    os.remove(checkpoint_path)
-    os.rmdir("./models")
+    os.remove(WEIGHTS_PATH)
+    os.remove(CHECKPOINT_PATH)
+    os.rmdir(MODEL_DIR)
     print("\n--- Cleaned up saved model files ---")
 
 if __name__ == "__main__":

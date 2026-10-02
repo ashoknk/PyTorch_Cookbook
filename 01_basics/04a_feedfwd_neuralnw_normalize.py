@@ -1,9 +1,12 @@
 """
+04a. Feedforward Neural Network (MLP) with PyTorch - Single Image Dataset
+
 Purpose:
     This script sets up a PyTorch image preprocessing and data augmentation pipeline 
     using torchvision.transforms. It prepares raw images for model training by ensuring 
     uniform dimensions, enhancing dataset diversity, and standardizing pixel values.
-
+    Documentation: https://docs.pytorch.org/vision/stable/transforms.html
+    
 Data Processing Flow:
     1. Resize: Rescales raw images to a fixed dimension (256x256).
     2. RandomCrop: Crops a sub-region (224x224) to make the model robust to scale/position.
@@ -22,12 +25,15 @@ Data Processing Flow:
     It uses the formula: (pixel - mean) / std, moving values into a roughly -2.0 to +2.0 range.
 
     Why is this important for beginners to know?
-    - Faster Learning: Neural networks learn best when input numbers are centered around zero. 
-    It prevents the model's training path from taking slow "zig-zag" steps.
-    - Pretrained Models: Models trained on ImageNet expect inputs in this exact normalized format. 
-    Skipping this step causes the model to get confused by unexpected input scales.
-    - Stable Gradients: Keeps numbers at a balanced scale so the network doesn't run into training 
-    errors like vanishing or exploding gradients.
+    - Faster Learning: 
+        Neural networks learn best when input numbers are centered around zero. 
+        It prevents the model's training path from taking slow "zig-zag" steps.
+    - Pretrained Models: 
+        Models trained on ImageNet expect inputs in this exact normalized format. 
+        Skipping this step causes the model to get confused by unexpected input scales.
+    - Stable Gradients: 
+        Keeps numbers at a balanced scale so the network doesn't run into training 
+        errors like vanishing or exploding gradients.
     
 """
 
@@ -35,7 +41,7 @@ import torch
 from torchvision import transforms
 from PIL import Image
 import os
-
+import matplotlib.pyplot as plt
 
 # 1. Define the transform pipeline pattern
 # transforms.Compose chains multiple data preprocessing steps together into one sequence.
@@ -90,16 +96,47 @@ How Were These Numbers Calculated?
 
 def main():
     # Create a dummy RGB image (256x256 pixels) for demonstration purposes
-    dummy_image = Image.new("RGB", (256, 256), color=(255, 0, 0))
+    # dummy_image = Image.new("RGB", (256, 256), color=(255, 0, 0))
     
     # Ensure the 'data' directory exists
     os.makedirs("data", exist_ok=True)
 
     # Create and save the image
-    dummy_image = Image.new("RGB", (256, 256), color=(255, 0, 0))
-    dummy_image.save("data/dummy_image.png")
+    # dummy_image = Image.new("RGB", (256, 256), color=(255, 0, 0))
+    # dummy_image.save("data/dummy_image.png")
 
-    # Apply the transform pipeline
+    # Open the existing PNG file and assign it to dummy_image
+    dummy_image = Image.open("data/dummy_image.png")
+
+
+    # =======Visualize BEFORE AND AFTER using plt.subplots=======
+
+    # Create spatial pipeline (PIL Image to PIL Image) to display in Matplotlib before ToTensor
+    # visual_spatial_transforms = transforms.Compose([
+    #     transforms.Resize((256, 256)),
+    #     transforms.RandomCrop(224)
+    # ])
+    # transformed_pil_image = visual_spatial_transforms(dummy_image)
+
+    # # Setup side-by-side subplots
+    # fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+
+    # # Display BEFORE Image
+    # axes[0].imshow(dummy_image)
+    # axes[0].set_title(f"BEFORE: Original Image\nSize: {dummy_image.size} (W x H)", fontweight="bold")
+    # axes[0].axis("on")
+
+    # # Display AFTER Image
+    # axes[1].imshow(transformed_pil_image)
+    # axes[1].set_title(f"AFTER: Resized & Cropped\nSize: {transformed_pil_image.size} (W x H)", fontweight="bold")
+    # axes[1].axis("on")
+
+    # plt.tight_layout()
+    # plt.show()   
+
+
+    # ================== Apply the transform pipeline ==========================#
+    
     processed_tensor = train_transforms(dummy_image)
     
     # Verify the transformed tensor properties

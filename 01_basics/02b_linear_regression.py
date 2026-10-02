@@ -1,12 +1,12 @@
 """
-02. Linear Regression with PyTorch
+02b. Linear Regression with PyTorch
 
 This script demonstrates how to train a basic parametric model using PyTorch. 
 We generate a noisy linear dataset and train a single-layer neural network 
 to fit a line of the form y = w * x + b. This example introduces key PyTorch 
 concepts: Modules, Loss Functions, and Optimizers.
 
-SGD (Stochastic Gradient Descent) is used because it is the engine that 
+SGD (Stochastic Gradient Descent) optimizer is used because it is the engine that 
 actually allows the model to learn.In PyTorch, the Model class only defines 
 the structure of your model (the math equations and the weights). 
 The optimizer (like SGD) is the separate tool that modifies those weights 
@@ -51,6 +51,7 @@ class LinearRegressionModel(nn.Module):
         # In standard practice, nn.Linear is almost always used with dimensions larger than (1, 1)
         # Documentation: https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
         self.linear = nn.Linear(1, 1)
+        #  nn.Linear(in_features=1, out_features=1)
 
     # The forward method defines how input data passes through the layers.
     def forward(self, x):
@@ -65,6 +66,7 @@ def main():
     # Equivalent in sklearn is random_state=42
     torch.manual_seed(42)
     
+    # Synthetic data generation 
     # Generate 100 features from normal distribution
     X = torch.randn(100, 1)
     # Target function: y = 2 * x + 1 + noise
@@ -130,7 +132,6 @@ def main():
         # "If I change this specific weight by a tiny amount, will the total loss go up or down, and by how much?"
         # loss.backward() calculates these gradients and attaches them directly to each weight tensor (storing them in weight.grad).
         loss.backward()
-        
         
         # Adjust weight and bias parameters using SGD step
         optimizer.step()

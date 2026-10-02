@@ -9,8 +9,9 @@ Autograd (automatic differentiation) to calculate gradients for training.
 Learning Objectives:
 1. Understand how to create and manipulate PyTorch Tensors.
 2. Learn how to route computations to GPU or Apple Silicon MPS accelerators.
-3. Discover how PyTorch automatically tracks math operations to calculate derivatives.
-4. Learn how to detach operations from tracking to optimize memory.
+3. Learn how to perform tensor math, reshape tensors, and multiply matrices.
+4. Learn how to calculate gradients using backpropagation.
+5. Learn how to detach operations from tracking to optimize memory.
 """
 
 # We import the core torch library. This provides the multidimensional tensor 
@@ -33,6 +34,8 @@ def main():
     # We can create tensors representing random distributions. 
     # torch.randn generates values from a standard normal distribution (mean=0, variance=1).
     # Documentation: https://pytorch.org/docs/stable/generated/torch.randn.html
+    # `torch.randn` specifically samples from the standard normal distribution (mean = 0, standard deviation = 1), 
+    # while `torch.normal` allows you to specify custom means and standard deviations for your distribution
     random_tensor = torch.randn(2, 3)
     print(f"Random 2x3 normal distribution tensor:\n{random_tensor}\n")
 
@@ -53,23 +56,29 @@ def main():
     print(f"Selected computing device: {device}")
     
     # Move our random tensor to the target device using the .to() method.
+    # ex. move data from CPU RAM into the GPU
+    # Hardware accelerators (CUDA for NVIDIA GPUs, MPS for Apple Silicon) have their own separate, high-speed VRAM memory pools.
     device_tensor = random_tensor.to(device)
     print(f"Tensor is now on device: {device_tensor.device}\n")
     
-
+    
     # ==========================================
     # 3. TENSOR MATHEMATICS AND RESHAPING
     # ==========================================
     print("--- 3. Tensor Math & Reshaping ---")
     
     t = torch.rand(2, 6) # 12 elements total
+    print(f"t: {t}")
+    print(f"t.Size([3, 4]): {t.shape}") 
 
     # Reshape into a 2D matrix (3 rows, 4 columns)
     t_3x4 = t.view(3, 4)
+    print(f"t_3x4: {t_3x4}")
     print(f"torch.Size([3, 4]): {t_3x4.shape}")   # torch.Size([3, 4])
 
     # Reshape into a 3D tensor (2 x 2 x 3)
     t_3d = t.view(2, 2, 3)
+    print(f"t_3d: {t_3d}")
     print(f"torch.Size([2, 2, 3]): {t_3d.shape}")    # torch.Size([2, 2, 3])
 
     # We can reshape tensors. The .view() method creates a new view of the tensor data 
@@ -82,12 +91,16 @@ def main():
     # We create a 3x2 tensor to multiply with our 2x3 tensor, resulting in a 2x2 tensor.
     # Documentation: https://pytorch.org/docs/stable/generated/torch.matmul.html
     multiplier = torch.randn(3, 2)
-    multiplied_tensor = torch.matmul(random_tensor, multiplier)
-    print(f"Matrix multiplication using torch.matmul (Shape {multiplied_tensor.shape}):\n{multiplied_tensor}\n")
 
-    multiplier = torch.randn(3, 2)
+    print(f"\nRandom tensor:\n{random_tensor}\n")
+    print(f"Multiplier tensor:\n{multiplier}\n")
+    multiplied_tensor = torch.matmul(random_tensor, multiplier)
+    print(f"\nMatrix multiplication using torch.matmul (Shape {multiplied_tensor.shape}):\n{multiplied_tensor}\n")
+
+    # multiplier = torch.randn(3, 2)
     multiplied_tensor = random_tensor @ multiplier
     print(f"Matrix multiplication using @ operator (Shape {multiplied_tensor.shape}):\n{multiplied_tensor}\n")
+    
 
     # ==========================================
     # 4. AUTOGRAD: AUTOMATIC DIFFERENTIATION
@@ -97,20 +110,32 @@ def main():
     # To calculate gradients, we must set requires_grad=True when creating a tensor.
     # This tells PyTorch to track all operations involving this tensor in a dynamic graph.
     # Documentation: https://pytorch.org/docs/stable/autograd.html
-    x = torch.tensor([2.0], requires_grad=True)
+    # weight_x represents a Model Weight (or Parameter). Track this variable because we are going to tweak it during training using gradient descent.
+    weight_x = torch.tensor([2.0], requires_grad=True)
     
-    # We define an equation: y = 3 * x^2 + 2 * x
-    # The derivative of this equation is: dy/dx = 6 * x + 2
-    y = 3 * (x ** 2) + 2 * x
-    print(f"Inputs: x = {x.item()}")
-    print(f"Forward equation value: y = {y.item()}")
+    # We define an simple polynomial function: loss_y = 3 * weight_x^2 + 2 * weight_x. An educational example 
+    # Mean Squared Error (MSE Loss) or Binary Cross-Entropy (BCE Loss) will be used in real-world scenarios. The goal is to minimize the loss function by adjusting the model weights.
+    # The derivative of this equation is: dy/dx = 6 * weight_x + 2
+    # loss_y represents the Loss Function:the value measuring error or cost. You want loss_y to be as small as possible
+    loss_y = 3 * (weight_x ** 2) + 2 * weight_x
+    print(f"Inputs: weight_x = {weight_x.item()}")
+    print(f"Forward equation value: loss_y = {loss_y.item()}")
 
     # We trigger the backpropagation step by calling .backward() on our output.
-    # This calculates the gradients of y with respect to x and stores them in x.grad.
+    # This calculates the gradients of loss_y with respect to weight_x and stores them in weight_x.grad.
     # Documentation: https://pytorch.org/docs/stable/generated/torch.Tensor.backward.html
-    y.backward()
-    print(f"Calculated gradient dy/dx at x=2 is: {x.grad.item()} (Expected: 6*2 + 2 = 14)\n")
+    loss_y.backward()
+    print(f"Calculated gradient dy/dx at x=2 is: {weight_x.grad.item()} (Expected: 6*2 + 2 = 14)\n")
 
+    # The gradient tells you the slope and direction of the function. 
+    # A gradient of 14.0 means that if you increase [weight_x] by a tiny amount, [loss_y] will increase "grad" times faster.
+    # New weight_x= weight_x - (Learning_Rate * Gradient)) ==> 2.0 - (0.01 * 14.0)
+    
+    print(f"Before tensor requires gradient? {weight_x.requires_grad}")
+    z = weight_x * 10
+    print(f"Before z requires gradient? {z.requires_grad}")
+    
+    
     # ==========================================
     # 5. GRADIENT DETACHMENT AND CONTEXTS
     # ==========================================
@@ -120,12 +145,12 @@ def main():
     # We use 'with torch.no_grad():' block to turn off tracking and save memory and speed up computation.
     # Documentation: https://pytorch.org/docs/stable/generated/torch.no_grad.html
     with torch.no_grad():
-        z = x * 10
+        z = weight_x * 10
         print(f"z inside no_grad block requires gradient? {z.requires_grad}")
 
     # Alternatively, we can use the .detach() method to get a new tensor that shares 
     # the same storage but has gradient tracking removed.
-    detached_x = x.detach()
+    detached_x = weight_x.detach()
     print(f"Detached tensor requires gradient? {detached_x.requires_grad}")
 
 if __name__ == "__main__":

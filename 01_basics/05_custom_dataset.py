@@ -1,7 +1,7 @@
 """
 05. Custom Datasets and DataLoaders in PyTorch
 
-This script demonstrates how to construct memory-safe, lazy-loading data pipelines 
+This script demonstrates how to construct data pipelines 
 for custom file structures. We create a mock disk-based dataset (a CSV index 
 and a directory of images), implement a subclass of PyTorch's Dataset, chain 
 visual transforms, and load the custom dataset in shuffled batches.
@@ -9,7 +9,7 @@ visual transforms, and load the custom dataset in shuffled batches.
 Learning Objectives:
 1. Inherit from and implement the three standard methods of torch.utils.data.Dataset.
 2. Build custom image loading logic using PIL (Pillow).
-3. Chain data augmentations (cropping, flipping, normalizing) using torchvision transforms.
+3. Compose a pipeline for data augmentations (cropping, flipping, normalizing) using torchvision transforms.
 4. Batch and shuffle custom data using torch.utils.data.DataLoader.
 """
 
@@ -28,6 +28,11 @@ from torch.utils.data import Dataset, DataLoader
 # Documentation: https://pytorch.org/vision/stable/transforms.html
 import torchvision.transforms as transforms
 
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+DUMMY_IMAGE_DIR = os.path.join(DATA_DIR, "dummy_images")
+DUMMY_ANNOTATIONS_CSV = os.path.join(DATA_DIR, "dummy_annotations.csv")
+NUMBER_OF_IMAGES = 16 
 # ==========================================
 # 1. DEFINE CUSTOM DATASET CLASS
 # ==========================================
@@ -46,12 +51,17 @@ class CustomDataset(Dataset):
         self.img_dir = img_dir
         self.transform = transform
 
+    #  Tells PyTorch how many samples are in the dataset. 
+    # With shuffle=True, the DataLoader uses that count to determine which samples to shuffle.
     def __len__(self):
         # Must return the total number of items in our dataset
         return len(self.annotations)
 
+    # Defines how to retrieve one sample by index. The DataLoader calls it for each sample it needs, 
+    # then groups the returned images and labels into batches.
     def __getitem__(self, idx):
         # 1.1 Extract image path from annotation dataframe
+        # iloc[row_index, column_index] stands for integer-location based indexing.
         img_name = os.path.join(self.img_dir, self.annotations.iloc[idx, 0])
         
         # 1.2 Read image from disk (using PIL)
@@ -68,21 +78,34 @@ class CustomDataset(Dataset):
 
 def setup_dummy_files():
     """Helper to create dummy CSV index and image files on disk for demonstration."""
-    os.makedirs("./dummy_images", exist_ok=True)
+    os.makedirs(DUMMY_IMAGE_DIR, exist_ok=True)
     
-    # Write 4 random RGB JPEG images to disk
-    for i in range(4):
+    # Write 16 random RGB JPEG images to disk
+    
+    for i in range(NUMBER_OF_IMAGES):
         # We construct a 64x64 dummy image using PyTorch tensors and convert it to PIL
+        # numbers 0 and 255 define the minimum and maximum range for generating random integer pixel values
+        # 64 (1st dimension): Image Height (64 pixels tall).
+        # 64 (2nd dimension): Image Width (64 pixels wide).
+        # 3 (3rd dimension): 3 Color Channels (Red, Green, Blue).
+        # Standard image formats (PNG, JPEG) store pixel intensities as uint8 values per color channel
         rand_tensor = torch.randint(0, 255, (64, 64, 3), dtype=torch.uint8)
         img = Image.fromarray(rand_tensor.numpy(), "RGB")
-        img.save(f"./dummy_images/img_{i}.jpg")
+        img.save(os.path.join(DUMMY_IMAGE_DIR, f"img_{i}.jpg"))
         
+    
+    # Generates 16 random binary integers (0 or 1) as a 1D tensor
+    binary_tensor = torch.randint(low=0, high=2, size=(NUMBER_OF_IMAGES,))
+
+    print(binary_tensor)
+    # Example output: tensor([1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1])
+  
     # Write an annotations CSV indexing these images with dummy class labels
     df = pd.DataFrame({
-        "image_file": [f"img_{i}.jpg" for i in range(4)],
-        "label": [0, 1, 0, 1]
+        "image_file": [f"img_{i}.jpg" for i in range(NUMBER_OF_IMAGES)],
+        "label": binary_tensor
     })
-    df.to_csv("dummy_annotations.csv", index=False)
+    df.to_csv(DUMMY_ANNOTATIONS_CSV, index=False)
     print("--- Created dummy image files and dummy_annotations.csv index ---")
 
 def main():
@@ -97,6 +120,10 @@ def main():
     # 2. Randomly flip horizontally (data augmentation).
     # 3. Convert PIL to Tensor (maps pixels [0, 255] to [0.0, 1.0]).
     # 4. Standard normalize mean/std.
+    # We use mean=(0.5,), std=(0.5,) for gray scale images.
+    # But for colored images we use mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225] values. 
+    # Researchers calculated these exact values by analyzing all millions of images 
+    # in the massive ImageNet dataset across three color channels (Red, Green, Blue)
     # Documentation: https://pytorch.org/vision/stable/generated/torchvision.transforms.Compose.html
     transform_pipeline = transforms.Compose([
         transforms.Resize((32, 32)),
@@ -110,8 +137,8 @@ def main():
     # ==========================================
     print("--- Instantiating Custom Dataset and DataLoader ---")
     custom_dataset = CustomDataset(
-        csv_file="dummy_annotations.csv",
-        img_dir="./dummy_images",
+        csv_file=DUMMY_ANNOTATIONS_CSV,
+        img_dir=DUMMY_IMAGE_DIR,
         transform=transform_pipeline
     )
 
@@ -131,17 +158,42 @@ def main():
     print("\n--- Iterating through custom DataLoader ---")
     for batch_idx, (images, labels) in enumerate(dataloader):
         print(f"Batch {batch_idx + 1}:")
-        # Expected shape: [Batch_Size, Channels, Height, Width]
+        # Expected shape: [Batch_Size, Channels, Height, Width] 
+        # ex. 2 images in this batch, 3 color channels per image , 32 × 32 pixels per image
         print(f"  Images batch shape: {images.shape} (Expected: [2, 3, 32, 32])")
         print(f"  Labels batch shape: {labels.shape} (Labels: {labels.tolist()})")
 
     # Clean up dummy assets from workspace
     print("\n--- Cleaning up dummy files ---")
-    for i in range(4):
-        os.remove(f"./dummy_images/img_{i}.jpg")
-    os.rmdir("./dummy_images")
-    os.remove("dummy_annotations.csv")
+    for i in range(NUMBER_OF_IMAGES):
+        os.remove(os.path.join(DUMMY_IMAGE_DIR, f"img_{i}.jpg"))
+    os.rmdir(DUMMY_IMAGE_DIR)
+    os.remove(DUMMY_ANNOTATIONS_CSV)
     print("Dummy files removed.")
 
 if __name__ == "__main__":
     main()
+
+
+"""
+How Were These Numbers Calculated?
+
+    Researchers calculated these exact values by analyzing all 14 million images 
+    in the massive ImageNet dataset across three color channels (Red, Green, Blue):
+
+    1. Pixel Average (Mean):
+    They averaged the brightness of every pixel in the dataset for each color channel:
+    - Red channel mean: 0.485 (about 48.5% brightness)
+    - Green channel mean: 0.456 (about 45.6% brightness)
+    - Blue channel mean: 0.406 (about 40.6% brightness)
+
+    2. Spread/Variation (Standard Deviation):
+    They measured how much the pixel values vary around those average brightness levels:
+    - Red channel std: 0.229
+    - Green channel std: 0.224
+    - Blue channel std: 0.225
+
+    Why Do We Use Them?
+    Because popular pretrained models (like ResNet) were originally trained on ImageNet. 
+    Using these exact numbers ensures your image data matches what the model expects to see!
+"""

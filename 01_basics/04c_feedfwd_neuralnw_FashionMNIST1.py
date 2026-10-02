@@ -1,4 +1,6 @@
 """
+04c. Feedforward Neural Network (MLP) with PyTorch - FashionMNIST Dataset Visualization
+
 Purpose:
     This script downloads and parses the FashionMNIST validation dataset to find 
     and display exactly one example image for each of the 10 fashion categories.
@@ -11,11 +13,18 @@ Data Processing Flow & Visualization:
     5. Grid Plotting: Displays the 10 unique grayscale images in a 2x5 Matplotlib subplot layout.
 """
 
+import os
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torchvision
 import torchvision.transforms as transforms
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DATA_DIR = os.path.join(PROJECT_ROOT, "data")
+
+PNG_FILE = os.path.join(DATA_DIR, "fashion_mnist_examples.png")
+
 
 # 1. Define the 10 official category text labels in order (indices 0-9)
 classes = [
@@ -34,20 +43,24 @@ classes = [
 def main():
     # 2. Download and load the FashionMNIST validation dataset
     transform = transforms.Compose([transforms.ToTensor()])
+    
+    # Documentation: https://docs.pytorch.org/vision/stable/generated/torchvision.datasets.FashionMNIST.html
     test_set = torchvision.datasets.FashionMNIST(
         root="./data", train=False, download=True, transform=transform
     )
+    
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=1000, shuffle=False)
 
     # 3. Find exactly one image for each unique category index
     images, labels = next(iter(test_loader))
     unique_images = {}
 
+    NUMBER_OF_CLASSES = 10
     for img, label in zip(images, labels):
         label_idx = label.item()
         if label_idx not in unique_images:
             unique_images[label_idx] = img
-        if len(unique_images) == 10:  # Stop once we have all 10 classes
+        if len(unique_images) == NUMBER_OF_CLASSES:  # Stop once we have all 10 classes
             break
 
     # 4. Plot the 10 categories in a neat 2x5 grid
@@ -55,7 +68,7 @@ def main():
     fig, axes = plt.subplots(2, 5, figsize=(12, 6))
     axes = axes.ravel()
 
-    for idx in range(10):
+    for idx in range(NUMBER_OF_CLASSES):
         # Convert PyTorch tensor to numpy array and remove channel dim for grayscale (28x28)
         img_np = unique_images[idx].squeeze().numpy()
 
@@ -64,6 +77,7 @@ def main():
         axes[idx].axis("off")
 
     plt.tight_layout()
+    fig.savefig(PNG_FILE, dpi=300, bbox_inches="tight")
     plt.show()
 
 if __name__ == "__main__":

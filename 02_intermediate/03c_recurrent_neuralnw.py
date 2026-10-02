@@ -6,6 +6,12 @@ classifiers. We build a customizable network containing an Embedding layer,
 a recurrent engine (supporting RNN, LSTM, or GRU), and a final linear prediction 
 head. We simulate a binary sentiment classification task with padded token sequences.
 
+nn.Embedding acts as a lookup table that maps each discrete word ID into a dense vector of real numbers 
+(e.g., 16 floats per word):   
+    1 ("Very") -> [0.12, -0.84, 0.45, ...]
+    2 ("good") -> to$ [0.91, 0.72, -0.11, ...]
+Embedding layer learns to put words with similar meanings (like "good" and "awesome") close together in vector space.  
+
 Learning Objectives:
 1. Build sequence classifiers using PyTorch's recurrent modules (nn.LSTM, nn.GRU).
 2. Map token indices to dense continuous vector spaces using nn.Embedding.
@@ -104,6 +110,8 @@ def main():
     # ==========================================
     print("\n--- Training on Toy Sentiments (0=Negative, 1=Positive) ---")
     # Toy dataset: 6 sentences, tokenized and padded to sequence length 5
+    # Imagine a dictionary where: 1 = "Very", 2 = "good", 3 = "awesome", 5 = "Terrible", 0 = <PAD> (blank space).   
+    # The sentence "Very good" becomes [1, 2, 3, 0, 0].   
     toy_X = torch.tensor([
         [1, 2, 3, 0, 0],  # "Very good" padded
         [4, 5, 6, 7, 0],  # "Extremely bad review" padded
