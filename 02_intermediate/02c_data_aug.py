@@ -1,5 +1,4 @@
 """
-<<<<<<< Updated upstream
 08 - 2c : Modern Data Augmentation with torchvision.transforms.v2
 Visual regularization, dynamic data pipelines, and the recommended modern torchvision v2 transforms API 
 (e.g., RandomHorizontalFlip, RandomRotation, ColorJitter, RandomErasing).
@@ -11,19 +10,6 @@ so the network never sees the exact same image twice.
 
 Highly practical. Learners can train a small CNN with and without augmentation and
  compare the accuracy curves, proving how data augmentation forces the model to generalize better.
-=======
-Concept 3: Modern Data Augmentation with torchvision.transforms.v2
-Visual regularization, dynamic data pipelines, and the recommended modern torchvision v2 transforms API
- (e.g., RandomHorizontalFlip, RandomRotation, ColorJitter, RandomErasing).
-
-Once you understand how a basic CNN is trained, their immediate next problem is overfitting
-(the model performs well on training data but poorly on test data).
-This script teaches how to solve overfitting by dynamically distorting images during training 
-so the network never sees the exact same image twice.
-
-Highly practical. Learners can train a small CNN with and without augmentation and compare the accuracy curves, 
-proving how data augmentation forces the model to generalize better.
->>>>>>> Stashed changes
 
 Learning Objectives:
 1. Understand how data augmentation serves as a powerful regularizer to combat overfitting.
