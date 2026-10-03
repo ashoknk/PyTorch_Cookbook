@@ -1,6 +1,5 @@
 """
-CIFAR-10 Dataset Class Image Preview
-
+08 -  2e CIFAR-10 Class Image Preview
 Goal:
     Show one example image from each of the 10 CIFAR-10 classes with its label.
 

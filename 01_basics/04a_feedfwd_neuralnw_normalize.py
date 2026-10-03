@@ -112,27 +112,27 @@ def main():
     # =======Visualize BEFORE AND AFTER using plt.subplots=======
 
     # Create spatial pipeline (PIL Image to PIL Image) to display in Matplotlib before ToTensor
-    # visual_spatial_transforms = transforms.Compose([
-    #     transforms.Resize((256, 256)),
-    #     transforms.RandomCrop(224)
-    # ])
-    # transformed_pil_image = visual_spatial_transforms(dummy_image)
+    visual_spatial_transforms = transforms.Compose([
+        transforms.Resize((256, 256)),
+        transforms.RandomCrop(224)
+    ])
+    transformed_pil_image = visual_spatial_transforms(dummy_image)
 
-    # # Setup side-by-side subplots
-    # fig, axes = plt.subplots(1, 2, figsize=(10, 5))
+    # Setup side-by-side subplots
+    fig, axes = plt.subplots(1, 2, figsize=(10, 5))
 
-    # # Display BEFORE Image
-    # axes[0].imshow(dummy_image)
-    # axes[0].set_title(f"BEFORE: Original Image\nSize: {dummy_image.size} (W x H)", fontweight="bold")
-    # axes[0].axis("on")
+    # Display BEFORE Image
+    axes[0].imshow(dummy_image)
+    axes[0].set_title(f"BEFORE: Original Image\nSize: {dummy_image.size} (W x H)", fontweight="bold")
+    axes[0].axis("on")
 
-    # # Display AFTER Image
-    # axes[1].imshow(transformed_pil_image)
-    # axes[1].set_title(f"AFTER: Resized & Cropped\nSize: {transformed_pil_image.size} (W x H)", fontweight="bold")
-    # axes[1].axis("on")
+    # Display AFTER Image
+    axes[1].imshow(transformed_pil_image)
+    axes[1].set_title(f"AFTER: Resized & Cropped\nSize: {transformed_pil_image.size} (W x H)", fontweight="bold")
+    axes[1].axis("on")
 
-    # plt.tight_layout()
-    # plt.show()   
+    plt.tight_layout()
+    plt.show()   
 
 
     # ================== Apply the transform pipeline ==========================#

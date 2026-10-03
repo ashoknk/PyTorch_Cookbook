@@ -1,5 +1,5 @@
 """
-11. RNN Language Model (Character-Level) with PyTorch
+11 - 5 : RNN Language Model (Character-Level) with PyTorch
 
 This script demonstrates how to train an autoregressive, character-level 
 Language Model using an LSTM. Given historical character contexts, the model 

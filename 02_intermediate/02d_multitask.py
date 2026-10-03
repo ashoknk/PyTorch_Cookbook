@@ -1,12 +1,14 @@
 """
-02d Multi-Task Learning (Classification + Bounding Box Regression)
- Multi-head neural networks, custom target formats, and Multi-Task Loss optimization (e.g., combining nn.CrossEntropyLoss for labels and nn.SmoothL1Loss for box coordinates).
+08 - 02d Multi-Task Learning (Classification + Bounding Box Regression)
+ Multi-head neural networks, custom target formats, and Multi-Task Loss optimization 
+ (e.g., combining nn.CrossEntropyLoss for labels and nn.SmoothL1Loss for box coordinates).
 
 Standard classifiers only predict what is in an image. Real-world applications often need to know where it is.
 This teaches how a single shared feature extractor can feed into two separate fully connected heads: 
     one outputting a category, and another outputting 4 spatial coordinates [xmin, ymin, xmax, ymax].
 You can programmatically generate a synthetic dataset of simple shapes 
-(e.g., drawing circles or squares at random coordinates on a dark canvas), keeping the code 100% self-contained, lightweight, and incredibly fun to train and visualize.
+(e.g., drawing circles or squares at random coordinates on a dark canvas), 
+keeping the code 100% self-contained, lightweight, and incredibly fun to train and visualize.
 
 Learning Objectives:
 1. Construct a multi-head neural network sharing a single CNN backbone.
@@ -135,6 +137,19 @@ class MultiTaskShapeDetector(nn.Module):
             # We use Sigmoid because bounding box coordinates are normalized in the range [0.0, 1.0].
             nn.Sigmoid() 
         )
+
+        """
+    The Sigmoid function takes any real number from -infinity to +infinity and squashes 
+        it strictly into a value between 0.0 and 1.0:    sigma(x) = 1 / (1 + e^(-x))
+    Adding nn.Sigmoid() at the end of bbox_head forces the neural network's predictions 
+    to naturally fall in that same range [0.0, 1.0].
+
+    The classification head outputs unnormalized class logits (raw scores) for each class:
+        CrossEntropyLoss Handles Softmax Internally:
+        nn.CrossEntropyLoss() combines LogSoftmax and NLLLoss (Negative Log-Likelihood Loss) in a single step.
+        It expects raw, unconstrained logits (e.g., [2.5, -1.1]) as input.
+        """ 
+        
 
     def forward(self, x):
         # Pass input through the shared convolutional layers

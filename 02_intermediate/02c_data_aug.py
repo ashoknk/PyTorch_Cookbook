@@ -1,11 +1,15 @@
 """
-Concept 3: Modern Data Augmentation with torchvision.transforms.v2
-Visual regularization, dynamic data pipelines, and the recommended modern torchvision v2 transforms API (e.g., RandomHorizontalFlip, RandomRotation, ColorJitter, RandomErasing).
+08 - 2c : Modern Data Augmentation with torchvision.transforms.v2
+Visual regularization, dynamic data pipelines, and the recommended modern torchvision v2 transforms API 
+(e.g., RandomHorizontalFlip, RandomRotation, ColorJitter, RandomErasing).
 
-  * Once learners understand how a basic CNN is trained, their immediate next problem is overfitting (the model performs well on training data but poorly on test data).
-  * This script teaches them how to solve overfitting by dynamically distorting images during training so the network never sees the exact same image twice.
+Once we understand how a basic CNN is trained, our immediate next problem is overfitting 
+  (the model performs well on training data but poorly on test data).
+This script teaches them how to solve overfitting by dynamically distorting images during training 
+so the network never sees the exact same image twice.
 
-Highly practical. Learners can train a small CNN with and without augmentation and compare the accuracy curves, proving how data augmentation forces the model to generalize better.
+Highly practical. Learners can train a small CNN with and without augmentation and
+ compare the accuracy curves, proving how data augmentation forces the model to generalize better.
 
 Learning Objectives:
 1. Understand how data augmentation serves as a powerful regularizer to combat overfitting.
@@ -75,24 +79,26 @@ def main():
         # Adjust brightness and contrast randomly to simulate different lighting conditions
         v2.ColorJitter(brightness=0.2, contrast=0.2),
         
-        # Convert image to float tensor (scales pixels to [0, 1])
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
+        # Convert image to float tensor (scales pixels to [0, 1]) so PyTorch tensors can process it.
+        v2.ToImage(), #Converts raw input images into a dedicated torchvision.tv_tensors.Image object (a specialized PyTorch tensor).
+        v2.ToDtype(torch.float32, scale=True), #Converts the data type of pixel values to 32-bit floating point numbers.
+        #scale=True flag automatically scales integer pixel values from the standard range [0, 255] down to [0.0, 1.0].
         
         # Standard Normalization
         v2.Normalize(mean=(0.5,), std=(0.5,)),
         
-        # Randomly erase a rectangular patch of the image (simulates objects being partially blocked/occluded).
+        # Randomly erase (replcae with random values) a rectangular patch of the image (simulates objects being partially blocked/occluded).
         # Note: RandomErasing expects a tensor, so it must follow ToImage/ToDtype.
         v2.RandomErasing(p=0.2, scale=(0.02, 0.1), value='random')
+        # If erasing occurred before normalization, the erased patch values would undergo normalization again, altering the intended noise level
     ])
 
     # 2.2 Testing Pipeline: Only deterministic transforms (no randomness!).
     # We must NEVER randomly crop, flip, or erase validation/testing images.
     test_transform = v2.Compose([
-        v2.ToImage(),
-        v2.ToDtype(torch.float32, scale=True),
-        v2.Normalize(mean=(0.5,), std=(0.5,))
+        v2.ToImage(), #Converts raw input images into a dedicated torchvision.tv_tensors.Image object (a specialized PyTorch tensor).
+        v2.ToDtype(torch.float32, scale=True), #Converts the data type of pixel values to 32-bit floating point numbers.
+        v2.Normalize(mean=(0.5,), std=(0.5,)) #Normalizes the pixel values.
     ])
 
     # Load FashionMNIST using the two separate pipelines

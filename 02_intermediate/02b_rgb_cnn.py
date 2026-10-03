@@ -1,5 +1,5 @@
 """
-07 - 2b Multi-Channel (RGB) CNN Classification with CIFAR-10 Dataset
+08 - 2b Multi-Channel (RGB) CNN Classification with CIFAR-10 Dataset
 Processing 3-channel RGB inputs, how convolution filters handle depth, and 
 proper multi-channel normalization
 

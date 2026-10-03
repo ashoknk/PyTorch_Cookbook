@@ -1,5 +1,5 @@
 """
-12. Transfer Learning & Fine-Tuning with PyTorch
+12 - 6 : Transfer Learning & Fine-Tuning with PyTorch
 
 This script demonstrates how to leverage large-scale pre-trained models for custom 
 downstream tasks. It introduces feature extraction (freezing pre-trained convolutional 

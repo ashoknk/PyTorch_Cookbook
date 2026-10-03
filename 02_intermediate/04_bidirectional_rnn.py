@@ -1,5 +1,5 @@
 """
-10. Bidirectional Recurrent Neural Network (BiLSTM) with PyTorch
+10 - 4 : Bidirectional Recurrent Neural Network (BiLSTM) with PyTorch
 
 This script demonstrates how to construct and train a Bidirectional Recurrent 
 Neural Network (BiLSTM). In sequence classification or sequence tagging, reading 

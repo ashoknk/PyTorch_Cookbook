@@ -1,4 +1,44 @@
 """
+09 - 3b : Comparing Vanilla RNN, GRU, and LSTM (RECURRENT LAYER ENGINES)
+
+1. Standard Vanilla RNN (nn.RNN)
+--------------------------------
+- How it works:
+  Processes data step-by-step from left to right. At each step, it updates a single 
+  hidden state (memory) using the current word and the memory from the previous step.
+- Pros & Cons:
+  Very simple and fast, but suffers from the "vanishing gradient" problem—it quickly 
+  forgets information from earlier words in long sequences.
+- Best used for:
+  Simple, short sequence tasks or basic educational models.
+
+2. Gated Recurrent Unit (nn.GRU)
+--------------------------------
+- How it works:
+  An improved version of the Vanilla RNN that uses internal "gates" (Update and 
+  Reset gates) to control how much past memory to keep or discard at each step.
+- Pros & Cons:
+  Maintains longer context than a Vanilla RNN while keeping a single hidden state 
+  tensor, making it computationally fast and memory-efficient.
+- Best used for:
+  Medium-to-long text sequences when you need a balance of strong performance 
+  and fast training speeds.
+
+3. Long Short-Term Memory (nn.LSTM)
+-----------------------------------
+- How it works:
+  Uses a dual-memory system managed by three gates (Input, Forget, and Output gates):
+    a) Hidden State (hn): Short-term working memory used for immediate predictions.
+    b) Cell State (cn): Long-term highway memory that lets information flow across 
+       long sequences without fading.
+- Pros & Cons:
+  The gold standard for handling long dependencies, though it requires more memory 
+  and returns two memory tensors `(hn, cn)` instead of one.
+- Best used for:
+  Complex NLP tasks, long documents, or datasets where early word context heavily 
+  influences final predictions.
+===============================================================================
+
 Purpose:
     This script compares the three major recurrent layer engines in PyTorch side by side:
     1. Standard Vanilla RNN (nn.RNN)

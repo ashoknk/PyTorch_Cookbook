@@ -1,5 +1,5 @@
 """
-09. Recurrent Neural Network (RNN) with PyTorch
+09 - 3c : Recurrent Neural Network (RNN) with PyTorch
 
 This script demonstrates how to construct, train, and validate recurrent sequence 
 classifiers. We build a customizable network containing an Embedding layer, 
@@ -88,7 +88,20 @@ class SequenceClassifier(nn.Module):
 
 def main():
     print("--- 1. Initializing LSTM Sequence Classifier ---")
-    vocab_size = 100
+    vocab = {
+        "<PAD>": 0,
+        "very": 1,
+        "good": 2,
+        "awesome": 3,
+        "extremely": 4,
+        "bad": 5,
+        "review": 6,
+        "indeed": 7,
+        "terrible": 8,
+        "awful": 9,
+        "movie": 10,
+    }
+    vocab_size = len(vocab)
     model = SequenceClassifier(vocab_size=vocab_size, embedding_dim=16, hidden_size=32, rnn_type="LSTM")
     print(model)
 
@@ -109,18 +122,25 @@ def main():
     # 3. TRAINING LOOP ON TOY SENTIMENT DATA
     # ==========================================
     print("\n--- Training on Toy Sentiments (0=Negative, 1=Positive) ---")
-    # Toy dataset: 6 sentences, tokenized and padded to sequence length 5
-    # Imagine a dictionary where: 1 = "Very", 2 = "good", 3 = "awesome", 5 = "Terrible", 0 = <PAD> (blank space).   
-    # The sentence "Very good" becomes [1, 2, 3, 0, 0].   
-    toy_X = torch.tensor([
-        [1, 2, 3, 0, 0],  # "Very good" padded
-        [4, 5, 6, 7, 0],  # "Extremely bad review" padded
-        [1, 3, 8, 0, 0],  # "Very awesome indeed" padded
-        [5, 9, 0, 0, 0],  # "Terrible" padded
-        [2, 2, 8, 0, 0],  # "Good good awesome" padded
-        [9, 6, 7, 0, 0]   # "Awful bad movie" padded
-    ])
+    # Each sentence is converted to token IDs and padded to the same sequence length.
+    sentences = [
+        ["very", "good"],                  # Positive
+        ["extremely", "bad", "review"],    # Negative
+        ["very", "awesome", "indeed"],     # Positive
+        ["terrible"],                      # Negative
+        ["good", "good", "awesome"],       # Positive
+        ["awful", "bad", "movie"],         # Negative
+    ]
     toy_y = torch.tensor([1, 0, 1, 0, 1, 0])  # Binary labels
+    max_seq_len = 5
+    encoded_sentences = [
+        [vocab[word] for word in sentence][:max_seq_len]
+        for sentence in sentences
+    ]
+    toy_X = torch.tensor([
+        sentence + [vocab["<PAD>"]] * (max_seq_len - len(sentence))
+        for sentence in encoded_sentences
+    ])
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)

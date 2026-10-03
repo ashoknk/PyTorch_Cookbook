@@ -164,12 +164,12 @@ def main():
         print(f"  Labels batch shape: {labels.shape} (Labels: {labels.tolist()})")
 
     # Clean up dummy assets from workspace
-    print("\n--- Cleaning up dummy files ---")
-    for i in range(NUMBER_OF_IMAGES):
-        os.remove(os.path.join(DUMMY_IMAGE_DIR, f"img_{i}.jpg"))
-    os.rmdir(DUMMY_IMAGE_DIR)
-    os.remove(DUMMY_ANNOTATIONS_CSV)
-    print("Dummy files removed.")
+    # print("\n--- Cleaning up dummy files ---")
+    # for i in range(NUMBER_OF_IMAGES):
+    #     os.remove(os.path.join(DUMMY_IMAGE_DIR, f"img_{i}.jpg"))
+    # os.rmdir(DUMMY_IMAGE_DIR)
+    # os.remove(DUMMY_ANNOTATIONS_CSV)
+    # print("Dummy files removed.")
 
 if __name__ == "__main__":
     main()
