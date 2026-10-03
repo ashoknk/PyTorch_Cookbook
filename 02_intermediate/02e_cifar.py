@@ -43,6 +43,7 @@ def main():
 
     # Plot RGB images in a 2x5 grid. Matplotlib expects channels in the last dimension.
     fig, axes = plt.subplots(2, 5, figsize=(12, 6))
+     # axes.ravel() flattens a multi-dimensional array into a 1D array.This lets you iterate using a single index [axes[0], axes[1]..
     for class_idx, axis in enumerate(axes.ravel()):
         image = class_images[class_idx].permute(1, 2, 0).numpy()
         axis.imshow(image)
