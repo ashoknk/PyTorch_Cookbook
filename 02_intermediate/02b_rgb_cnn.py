@@ -7,29 +7,22 @@ proper multi-channel normalization
 02_intermediate/06_transfer_learning.py uses pre-trained ResNet-18, which expects 3-channel (RGB) images.
 Transitioning straight from 1-channel grayscale to pre-trained RGB models to understand how to build a CNN that accepts color images.
 
-CIFAR-10 features color photos of real-world objects (airplanes, automobiles, cats, dogs)  32X 32 resolution.
-that learners can easily identify and visualize.
+CIFAR-10 features color photos of real-world objects (airplanes, automobiles, cats, dogs) 
+32X 32 resolution that learners can easily identify and visualize.
 The network uses a hierarchical architecture to extract fine details step by step:
 Raw RGB (3x32x32) ──> [Block 1] ──> [Block 2] ──> [Block 3] ──> [Classifier Head] ──> 10 Class Scores
                       (32x16x16)    (64x8x8)     (128x4x4)      (Linear -> Dropout -> Linear)
 
-
 Why Use Three Blocks with Increasing Channels (32 -> 64 -> 128)?
-
 1. Block 1 (3 -> 32 channels):
    Scans the raw 32x32 RGB image to detect basic visual features like 
    simple color gradients, vertical edges, and horizontal lines.
-
 2. Block 2 (32 -> 64 channels):
    Combines basic lines into intermediate shapes (e.g., wheels, circles, corners) 
    on a smaller 16x16 grid.
-
 3. Block 3 (64 -> 128 channels):
    Combines shapes into full object components (e.g., dog faces, car windshields, 
    bird wings) on a compact 8x8 grid.
-                      
-
-
 
 Learning Objectives:
 1. Master processing of 3-channel color (RGB) images in PyTorch.
@@ -69,8 +62,6 @@ How it works:
         its Red kernel with the Red channel, its Green kernel / the Green channel, and its Blue kernel / the Blue channel.
     -  out_channels=32 configures 32 filters. Each filter applies weights to all three input channels RGB, 
     sums those results, and adds a bias at each output position.
-    - These 3 dot products are SUMMED together along with a bias term to produce a single 
-        activation value on the output feature map.
     - Therefore, the number of input channels (in_channels) of your Conv2d layer must 
         exactly match the depth of your input image (3 for RGB).
 """
@@ -170,7 +161,12 @@ def main():
     # 3. INITIALIZE MODEL & LOSS FUNCTION
     # ==========================================
     model = ColorCNN(num_classes=10).to(device)
+    # CrossEntropyLoss directly trains the model to assign a higher score to the correct class.
+    # It applies the needed log-softmax internally, so pass the raw logits as this code does.
+    #NOTE : MSELoss is mainly for regression. BCELoss is useful for binary or multi-label tasks
     criterion = nn.CrossEntropyLoss()
+    # The optimizer is chosen based on training behavior, accuracy, and tuning needs. 
+    # Adam is a convenient default for training the CNN on CIFAR-10
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # ==========================================
@@ -192,7 +188,7 @@ def main():
         loss.backward() # Calculates the gradients for every weight and bias based on mistake/loss
         optimizer.step() # Updates the weights & the biases for the Next Iteration
 
-        if (batch_idx + 1) % 300 == 0:
+        if (batch_idx + 1) % 100 == 0:
             print(f"  Step [{batch_idx+1}/{len(train_loader)}], Classification Loss: {loss.item():.4f}")
 
     # ==========================================
