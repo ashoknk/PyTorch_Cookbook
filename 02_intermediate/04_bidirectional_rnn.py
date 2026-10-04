@@ -5,7 +5,13 @@ This script demonstrates how to construct and train a Bidirectional Recurrent
 Neural Network (BiLSTM). In sequence classification or sequence tagging, reading 
 the input from both left-to-right (forward) and right-to-left (backward) 
 simultaneously allows the network to incorporate full temporal context. We 
-illustrate the concatentation mechanics and evaluate a BiLSTM model on a synthetic classification task.
+illustrate the concatenation mechanics and evaluate a BiLSTM model on a small,
+hand-labeled English sentiment dataset.
+
+Real-World Applications - To classify sequences by reading text in both directions so the network understands every word using context from both what came before it and what comes after it.
+    Text / NLP: Sentences, articles, or audio transcriptions (Most common).   
+    DNA / Protein Sequences: Biological sequences where information flows both ways along a strand.
+    Time-Series / Sensors: Recorded sensor logs where entire sequences are analyzed retroactively.
 
 Learning Objectives:
 1. Initialize a bidirectional LSTM module using nn.LSTM(..., bidirectional=True).
@@ -28,7 +34,7 @@ import torch.optim as optim
 # 1. DEFINE BILSTM CLASSIFIER MODULE
 # ==========================================
 class BiLSTMClassifier(nn.Module):
-    def __init__(self, vocab_size=1000, embedding_dim=64, hidden_size=128, num_classes=2):
+    def __init__(self, vocab_size=1000, embedding_dim=16, hidden_size=32, num_classes=2):
         """
         Args:
             vocab_size (int): Size of vocabulary.
@@ -37,8 +43,10 @@ class BiLSTMClassifier(nn.Module):
             num_classes (int): Category output counts.
         """
         super(BiLSTMClassifier, self).__init__()
+        # Maps word integer IDs (e.g., 10) to continuous float vectors
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
         
+        # Reads the sequence and creates context representations
         # We specify bidirectional=True. The LSTM will internally maintain 
         # separate forward and backward weight matrices.
         # Documentation: https://pytorch.org/docs/stable/generated/torch.nn.LSTM.html
@@ -46,11 +54,13 @@ class BiLSTMClassifier(nn.Module):
             input_size=embedding_dim, 
             hidden_size=hidden_size, 
             batch_first=True, 
-            bidirectional=True
+            bidirectional=True # <--- THIS IS THE SWITCH
         )
         
         # The output layer must receive the combined context of BOTH directions.
-        # Since we concatenate forward and backward representations, the input dimension is 2 * hidden_size.
+        # Since we concatenate forward and backward representations, the input dimension is 2 * hidden_size.(NOT just hidden_size)
+        # Takes the combined memory vector and projects it into final class scores (logits)
+        # Receives 2x Features. Because forward and backward outputs are concatenated, this layer receives an input size of hidden_size * 2
         self.fc = nn.Linear(hidden_size * 2, num_classes)
 
     def forward(self, x):
@@ -64,13 +74,15 @@ class BiLSTMClassifier(nn.Module):
         
         # We extract the last layer's forward hidden state (index -2) and backward hidden state (index -1)
         # and concatenate them horizontally along the feature dimension.
-        # hn[-2] shape: [Batch, Hidden_Size] (forward final state)
-        # hn[-1] shape: [Batch, Hidden_Size] (backward final state)
-        # Documentation: https://pytorch.org/docs/stable/generated/torch.cat.html
-        forward_final = hn[-2]
-        backward_final = hn[-1]
+        # hn[-2] shape: [Batch, Hidden_Size] (forward final state). Final state of the left-to-right pass
+        # hn[-1] shape: [Batch, Hidden_Size] (backward final state). Final state of the right-to-left pass
         
-        combined_hidden = torch.cat((forward_final, backward_final), dim=-1) # Shape: [Batch, 2 * Hidden_Size]
+        forward_final = hn[-2] # Shape: [4, 32]
+        backward_final = hn[-1] # Shape: [4, 32]
+        
+        # concatenate a sequence of tensors along an existing dimension
+        # Documentation: https://pytorch.org/docs/stable/generated/torch.cat.html
+        combined_hidden = torch.cat((forward_final, backward_final), dim=-1) # Shape: [Batch, 2 * Hidden_Size] -> [4, 32 + 32] = [4, 64]   <-- HERE IS YOUR DOUBLED DIMENSION!
         
         # 1.3 Project concatenated state to category logits
         logits = self.fc(combined_hidden)
@@ -78,7 +90,17 @@ class BiLSTMClassifier(nn.Module):
 
 def main():
     print("--- 1. Initializing Bidirectional LSTM Classifier ---")
-    vocab_size = 150
+
+    # Each English word is mapped to the integer ID expected by nn.Embedding.
+    vocab = {
+        "<PAD>": 0,
+        "very": 1, "positive": 2, "day": 3,
+        "extremely": 4, "boring": 5, "post": 6,
+        "worst": 7, "film": 8, "ever": 9,
+        "beautiful": 10, "weather": 11,
+        "book": 12, "awful": 13, "bad": 14, "terrible": 15
+    }
+    vocab_size = len(vocab)
     model = BiLSTMClassifier(vocab_size=vocab_size, embedding_dim=16, hidden_size=32, num_classes=3)
     print(model)
 
@@ -86,7 +108,8 @@ def main():
     # 2. RUN SIMULATED DIMENSIONAL CHECK
     # ==========================================
     print("\n--- Running Dimensional Check with Synthetic Sequences ---")
-    # Simulate a batch of 4 sequences, each of length 8
+    
+    # Shape-check with random valid token IDs; these do not represent sentences.
     synthetic_batch = torch.randint(0, vocab_size, (4, 8))
     print(f"Batch sequence input shape: {synthetic_batch.shape}")
     
@@ -96,20 +119,32 @@ def main():
     assert logits.shape == (4, 3), "Bidirectional classifier forward pass dimensional mismatch."
 
     # ==========================================
-    # 3. TRAINING LOOP RUN ON TOY SENTENCE DATA
+    # 3. TRAINING LOOP ON ENGLISH SENTENCES
     # ==========================================
     print("\n--- Training Model on 3-Class Sentiment Prompts ---")
-    # Toy dataset: 6 sentences, tokenized and padded to sequence length 6
-    # Classes: 0 = Negative, 1 = Neutral, 2 = Positive
-    toy_X = torch.tensor([
-        [10, 11, 12, 0, 0, 0],  # "Very positive day"
-        [20, 21, 22, 0, 0, 0],  # "Extremely boring post"
-        [30, 31, 32, 0, 0, 0],  # "Worst film ever"
-        [10, 12, 13, 0, 0, 0],  # "Positive beautiful weather"
-        [20, 23, 0, 0, 0, 0],  # "Boring book"
-        [30, 34, 35, 0, 0, 0]   # "Awful bad terrible"
-    ])
+    text_sentences = [
+        ["very", "positive", "day"],
+        ["extremely", "boring", "post"],
+        ["worst", "film", "ever"],
+        ["positive", "beautiful", "weather"],
+        ["boring", "book"],
+        ["awful", "bad", "terrible"]
+    ]
+
+    # Labels are class IDs: 0 = Negative, 1 = Neutral, 2 = Positive.
+    # 1. Define human-readable label dictionary
+    label_map = {0: "Negative", 1: "Neutral", 2: "Positive"}
     toy_y = torch.tensor([2, 1, 0, 2, 1, 0])
+
+    # Convert each word to its vocabulary ID and pad sentences to length 6.
+    max_seq_len = 6
+    tokenized_batch = []
+    for sentence in text_sentences:
+        tokens = [vocab[word] for word in sentence]
+        padded_tokens = tokens + [vocab["<PAD>"]] * (max_seq_len - len(tokens))
+        tokenized_batch.append(padded_tokens)
+    # Convert to PyTorch Tensor
+    toy_X = torch.tensor(tokenized_batch)
 
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.01)
@@ -130,8 +165,14 @@ def main():
     model.eval()
     with torch.no_grad():
         preds = torch.argmax(model(toy_X), dim=-1)
-        print(f"Predictions: {preds.tolist()}")
-        print(f"Ground Truth: {toy_y.tolist()}")
+        # print(f"Predictions: {preds.tolist()}")
+        # print(f"Ground Truth: {toy_y.tolist()}")
+        # Convert prediction indices [2, 1, 0, 2, 1, 0] to English words
+        pred_words = [label_map[p.item()] for p in preds]
+        truth_words = [label_map[t.item()] for t in toy_y]
+        
+        print(f"Predicted Labels: {pred_words}")
+        print(f"Ground Truth:     {truth_words}")
 
 if __name__ == "__main__":
     main()

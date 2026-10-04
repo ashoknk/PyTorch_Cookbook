@@ -71,6 +71,11 @@ class SequenceClassifier(nn.Module):
         embedded = self.embedding(x)
         
         # 1.2 Feed to recurrent layer
+        # LSTM maintains two states, while RNN and GRU maintain one.vanilla RNN or GRU, it returns (out, hn). They don’t have a separate cell state.
+        # out: hidden output at every sequence step.
+        # hn: final hidden state.
+        # cn: final cell state, the LSTM’s additional memory state.
+
         if self.rnn_type == "LSTM":
             # LSTM returns: (outputs, (final_hidden_state, final_cell_state))
             out, (hn, cn) = self.rnn(embedded)
