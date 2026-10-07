@@ -64,8 +64,11 @@ def main():
     # Generate bidirectional mappings: character <-> integer index
     char_to_idx = {char: idx for idx, char in enumerate(chars)}
     idx_to_char = {idx: char for idx, char in enumerate(chars)}
+    print("chars :", list(chars[:10]))
+    print("char_to_idx sample:", dict(list(char_to_idx.items())[:10]))
+    print("idx_to_char sample:", dict(list(idx_to_char.items())[:10]))
     print(f"Text length: {len(text)}, Unique characters: {vocab_size}")
-
+    
     # ==========================================
     # 2. SEQUENCE PREPARATION FOR AUTOREGRESION
     # ==========================================
