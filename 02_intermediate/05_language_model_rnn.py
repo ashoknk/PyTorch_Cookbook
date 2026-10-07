@@ -41,6 +41,11 @@ class RNNLanguageModel(nn.Module):
         # x shape: [Batch, Seq_Len]
         embedded = self.embedding(x)
         # lstm returns outputs and a tuple containing final hidden and cell states
+        # hidden: Holds the LSTM’s memory vectors (h_t and c_t) containing context from all previously processed characters.
+        # The Purpose: During generation, characters are predicted one by one. Returning hidden allows you to pass the model's 
+        # running memory vector directly into the next step. Without passing hidden, the model would reset its memory every 
+        # time you feed it a single character and forget what it previously generated!
+
         out, hidden = self.lstm(embedded, hidden)
         # Map sequential outputs across all steps to vocabulary logits. Shape: [Batch, Seq_Len, Vocab_Size]
         logits = self.fc(out)
@@ -74,13 +79,22 @@ def main():
     # ==========================================
     # Translate entire text string to indices
     encoded_text = [char_to_idx[c] for c in text]
+    print("encoded_text sample:", dict(list(enumerate(encoded_text))[:10])) #maps to "hello worl"
+    print("encoded_text 1: :", dict(list(enumerate(encoded_text))[1:])) #maps to "ello worl..."
+    print("encoded_text :-1:", dict(list(enumerate(encoded_text))[:-1])) #maps to "hello worl..."
     
+
     # For autoregressive learning, target outputs are shifted right by 1 index:
     # Input sequence:  "h" "e" "l" "l" "o"
     # Target sequence: "e" "l" "l" "o" " "
+    # At every step index t, the model tries to predict the target index t+1:
+    # Given "h", predict "e".
+    # Given "h" "e", predict "l".
+    # Given "h" "e" "l", predict "l".
     inputs = torch.tensor(encoded_text[:-1], dtype=torch.long).unsqueeze(0)  # Shape: [1, Seq_Len-1]
     targets = torch.tensor(encoded_text[1:], dtype=torch.long).unsqueeze(0)  # Shape: [1, Seq_Len-1]
-
+    print(f"inputs shape: {inputs.shape}, targets shape: {targets.shape}")
+    
     # Initialize model, optimizer, and standard CrossEntropyLoss.
     # CrossEntropyLoss expects target shapes matching flattened sequence classifications.
     model = RNNLanguageModel(vocab_size=vocab_size)
@@ -127,6 +141,11 @@ def main():
         # Generate subsequent characters one-by-one
         for _ in range(30):
             # Pick the final step logit corresponding to our last generated character
+            # During character-by-character text generation:
+            # You feed the current input into the model. The output tensor logits has shape [batch_size, sequence_length, vocab_size].
+            # Index 0 selects the first (and only) sequence batch.
+            # Index -1 selects the very last time step in that sequence.
+
             last_logit = logits[0, -1]
             next_idx = sample_next_char(last_logit, temperature=0.8)
             
