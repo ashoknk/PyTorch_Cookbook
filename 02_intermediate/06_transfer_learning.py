@@ -22,9 +22,13 @@ import torch.nn as nn
 # optim contains optimization engines.
 import torch.optim as optim
 
+
+
 # torchvision.models contains state-of-the-art vision models.
 # Documentation: https://torchvision.org/stable/models.html
 import torchvision.models as models
+from torchvision.transforms import v2
+from PIL import Image
 
 # Import Weights indices to download pre-trained checkpoints
 from torchvision.models import ResNet18_Weights
@@ -49,6 +53,7 @@ def main():
     # We iterate over all model parameters and set requires_grad = False.
     # This prevents PyTorch Autograd from tracking gradients and performing updates 
     # on these layers during backpropagation, saving memory and training speed.
+    # requires_grad = False on parameters is done specifically for Training (specifically during Transfer Learning / Feature Extraction
     for param in model.parameters():
         param.requires_grad = False
 
@@ -63,7 +68,7 @@ def main():
     # Suppose we want to classify only 2 custom categories (e.g., "cats" vs. "dogs").
     # We swap out the old fc layer with a new nn.Linear layer.
     # Newly created layers have requires_grad = True by default!
-    model.fc = nn.Linear(in_features, 2)
+    model.fc = nn.Linear(in_features=in_features, out_features=2)
     print(f"Replaced classifier: {model.fc}")
 
     # ==========================================
@@ -77,6 +82,7 @@ def main():
     optimizer = optim.Adam(model.fc.parameters(), lr=0.003)
     
     # Let's check and audit trainable parameters
+    # p.numel() (short for "number of elements") returns the total number of elements contained within the tensor
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     frozen_params = sum(p.numel() for p in model.parameters() if not p.requires_grad)
     print(f"Trainable Parameters: {trainable_params:,} (Should be: 512 * 2 + 2 = 1,026)")
@@ -97,5 +103,41 @@ def main():
     assert outputs.shape == (2, 2), "Transfer learning output shape mismatch."
     print("Transfer learning setup verified successfully!")
 
+    # ==========================================
+    # 6. REAL IMAGE INFERENCE TEST
+    # ==========================================
+    print("\n--- 6. Testing Model Inference on Real Images ---")
+
+    # 1. Define ImageNet standard preprocessing pipeline required for ResNet-18
+    transform = v2.Compose([
+        v2.Resize((224, 224)),
+        v2.ToImage(),
+        v2.ToDtype(torch.float32, scale=True),
+        v2.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+    ])
+
+    # 2. Define human-readable label map
+    class_names = {0: "Cat", 1: "Dog"}
+
+    def predict_image(image_path, model):
+        # Load image file
+        img = Image.open(image_path).convert('RGB')
+        
+        # Preprocess image and add batch dimension [1, 3, 224, 224]
+        img_tensor = transform(img).unsqueeze(0)
+        
+        model.eval()
+        with torch.no_grad():
+            logits = model(img_tensor)
+            # Get probabilities using Softmax
+            probs = torch.softmax(logits, dim=1)
+            predicted_class_id = torch.argmax(probs, dim=1).item()
+            confidence = probs[0][predicted_class_id].item() * 100
+
+        print(f"File: {image_path:<10} | Predicted: {class_names[predicted_class_id]:<5} | Confidence: {confidence:.2f}%")
+
+    # Run prediction on your downloaded images
+    predict_image("data/cats/cat1.jpg", model)
+    predict_image("data/dogs/dog1.jpg", model)
 if __name__ == "__main__":
     main()
