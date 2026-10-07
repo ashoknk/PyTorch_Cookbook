@@ -8,7 +8,8 @@ simultaneously allows the network to incorporate full temporal context. We
 illustrate the concatenation mechanics and evaluate a BiLSTM model on a small,
 hand-labeled English sentiment dataset.
 
-Real-World Applications - To classify sequences by reading text in both directions so the network understands every word using context from both what came before it and what comes after it.
+Real-World Applications - To classify sequences by reading text in both directions so the network understands 
+        every word using context from both what came before it and what comes after it.
     Text / NLP: Sentences, articles, or audio transcriptions (Most common).   
     DNA / Protein Sequences: Biological sequences where information flows both ways along a strand.
     Time-Series / Sensors: Recorded sensor logs where entire sequences are analyzed retroactively.
@@ -34,7 +35,7 @@ import torch.optim as optim
 # 1. DEFINE BILSTM CLASSIFIER MODULE
 # ==========================================
 class BiLSTMClassifier(nn.Module):
-    def __init__(self, vocab_size=1000, embedding_dim=16, hidden_size=32, num_classes=2):
+    def __init__(self, vocab_size=1000, embedding_dim=16, hidden_size=32, num_classes=3):
         """
         Args:
             vocab_size (int): Size of vocabulary.
@@ -132,7 +133,7 @@ def main():
     ]
 
     # Labels are class IDs: 0 = Negative, 1 = Neutral, 2 = Positive.
-    # 1. Define human-readable label dictionary
+    # 1. Define human-readable label dictionary. num_classes=3
     label_map = {0: "Negative", 1: "Neutral", 2: "Positive"}
     toy_y = torch.tensor([2, 1, 0, 2, 1, 0])
 
@@ -150,6 +151,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=0.01)
 
     epochs = 30
+    # model -> criterion (loss calculation) ->  optimizer step
     for epoch in range(epochs):
         outputs = model(toy_X)
         loss = criterion(outputs, toy_y)
@@ -164,7 +166,7 @@ def main():
     # Print final verified class predictions
     model.eval()
     with torch.no_grad():
-        preds = torch.argmax(model(toy_X), dim=-1)
+        preds = torch.argmax(model(toy_X), dim=-1) #returns the indices of the maximum value of all elements in the tensor
         # print(f"Predictions: {preds.tolist()}")
         # print(f"Ground Truth: {toy_y.tolist()}")
         # Convert prediction indices [2, 1, 0, 2, 1, 0] to English words
