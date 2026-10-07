@@ -138,7 +138,7 @@ def main():
     toy_y = torch.tensor([2, 1, 0, 2, 1, 0])
 
     # Convert each word to its vocabulary ID and pad sentences to length 6.
-    max_seq_len = 6
+    max_seq_len = 3 # maximum number of tokens (here, words) in each sentence 
     tokenized_batch = []
     for sentence in text_sentences:
         tokens = [vocab[word] for word in sentence]

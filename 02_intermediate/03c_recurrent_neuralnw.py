@@ -138,7 +138,7 @@ def main():
         ["awful", "bad", "movie"],         # Negative
     ]
     toy_y = torch.tensor([1, 0, 1, 0, 1, 0])  # Binary labels
-    max_seq_len = 5 # maximum number of tokens (here, words) in each sentence 
+    max_seq_len = 3 # maximum number of tokens (here, words) in each sentence 
     encoded_sentences = [
         [vocab[word] for word in sentence][:max_seq_len]
         for sentence in sentences
