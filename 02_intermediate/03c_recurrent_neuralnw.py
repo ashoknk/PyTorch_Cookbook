@@ -144,7 +144,7 @@ def main():
         for sentence in sentences
     ]
     print(f"Vocabulary (Padded to {max_seq_len} tokens): {vocab}")
-    
+
     toy_X = torch.tensor([
         sentence + [vocab["<PAD>"]] * (max_seq_len - len(sentence))
         for sentence in encoded_sentences
@@ -154,6 +154,7 @@ def main():
     optimizer = optim.Adam(model.parameters(), lr=0.01)
 
     epochs = 40
+    # model -> criterion (loss calculation) ->  optimizer step
     for epoch in range(epochs):
         # Forward pass
         outputs = model(toy_X)
