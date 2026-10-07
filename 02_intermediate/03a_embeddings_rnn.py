@@ -61,7 +61,7 @@ def main():
     
     embedded_x = embedding_layer(raw_tokens)
     print(f"Embedded Tensor Shape: {embedded_x.shape} (Format: [Batch Size, Sequence Length, Embedding Dim])")
-    print("Notice how each word integer is now expanded into 16 floating-point values!")
+    print(f"Embedded Tensor: {embedded_x}")
 
     print("\n--- Step 3: Processing Sequences with nn.RNN ---")
     # batch_first=True ensures inputs/outputs match [Batch, Seq_Len, Feature_Dim] order
