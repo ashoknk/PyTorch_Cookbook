@@ -113,6 +113,7 @@ def main():
     # ==========================================
     # 2. RUN SIMULATED SEQUENCE BATCH CHECK
     # ==========================================
+    #NOTE : Feel free to skip this section if you want to focus on the training loop. It is just a sanity check for input/output shapes.
     print("\n--- Running Dimensional Check on Sequences ---")
     # Simulate 4 sequences of length 10 with token IDs from 0 to vocab_size - 1.
     synthetic_sequences = torch.randint(0, vocab_size, (4, 10))
@@ -137,11 +138,13 @@ def main():
         ["awful", "bad", "movie"],         # Negative
     ]
     toy_y = torch.tensor([1, 0, 1, 0, 1, 0])  # Binary labels
-    max_seq_len = 5
+    max_seq_len = 5 # maximum number of tokens (here, words) in each sentence 
     encoded_sentences = [
         [vocab[word] for word in sentence][:max_seq_len]
         for sentence in sentences
     ]
+    print(f"Vocabulary (Padded to {max_seq_len} tokens): {vocab}")
+    
     toy_X = torch.tensor([
         sentence + [vocab["<PAD>"]] * (max_seq_len - len(sentence))
         for sentence in encoded_sentences
