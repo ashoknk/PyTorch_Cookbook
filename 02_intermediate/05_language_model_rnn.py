@@ -139,7 +139,8 @@ def main():
         logits, hidden = model(current_input)
         
         # Generate subsequent characters one-by-one
-        for _ in range(30):
+        number_of_chars_to_generate = 30
+        for _ in range(number_of_chars_to_generate):
             # Pick the final step logit corresponding to our last generated character
             # During character-by-character text generation:
             # You feed the current input into the model. The output tensor logits has shape [batch_size, sequence_length, vocab_size].
@@ -147,7 +148,7 @@ def main():
             # Index -1 selects the very last time step in that sequence.
 
             last_logit = logits[0, -1]
-            next_idx = sample_next_char(last_logit, temperature=0.8)
+            next_idx = sample_next_char(last_logit, temperature=0.8) # 0.8 is "sweet spot" low to moderate
             
             # Map index back to character and append
             char = idx_to_char[next_idx]
