@@ -61,7 +61,7 @@ def main():
     
     embedded_x = embedding_layer(raw_tokens)
     print(f"Embedded Tensor Shape: {embedded_x.shape} (Format: [Batch Size, Sequence Length, Embedding Dim])")
-    print(f"Embedded Tensor: {embedded_x}")
+    # print(f"Embedded Tensor: {embedded_x}")
 
     print("\n--- Step 3: Processing Sequences with nn.RNN ---")
     # batch_first=True ensures inputs/outputs match [Batch, Seq_Len, Feature_Dim] order
@@ -78,6 +78,7 @@ def main():
 
     print("\n--- Step 4: Classification Prediction ---")
     # Extract the last layer's final hidden state for each sample in the batch
+    # the final layer has processed the hierarchical information from all the layers beneath it, making its final hidden state the best, most comprehensive representation of the entire sentence to pass into our classifier.
     last_hidden = hn[-1]  # Shape: [Batch Size, Hidden_Size] (2, 32)
     
     # Linear classification head maps hidden memory representation down to class output scores
@@ -88,8 +89,8 @@ def main():
     print(f"Sample Output Predictions:\n{logits}")
     #             Class 0, Class 1 
     #             Negative   Positive
-    #   tensor([[ -0.7358,  0.0517], ===> Sentence 1 : ["i", "love", "this", "movie"]. 0.0517 > -0.7358.
-    #           [ -0.4474, -0.3162]] ===> Sentence 2 : ["i", "hate", "it"]. -0.3162 > -0.4474
+    #   tensor([[ 0.1066,  0.1108], ===> Sentence 1 : ["i", "love", "this", "movie"]. 
+    #           [ 0.2379, -0.087]] ===> Sentence 2 : ["i", "hate", "it"].
     # These raw numbers are called logits (unnormalized class scores). 
     # The model has not been trained on any actual data or loss function yet, so its weights are completely random.   
 
