@@ -118,7 +118,7 @@ def main():
     synthetic_sequences = torch.randint(0, vocab_size, (4, 10))
     print(f"Batch sequence input shape: {synthetic_sequences.shape} (Format: [Batch, Seq_Len])")
     
-    # Forward pass
+    # Forward pass : model --> criterion & optimizer
     logits = model(synthetic_sequences)
     print(f"Output predictions shape: {logits.shape} (Format: [Batch, Num_Classes])")
     assert logits.shape == (4, 2), "Sequence classifier forward pass dimensional mismatch."
@@ -167,7 +167,7 @@ def main():
     # Evaluate predictions
     model.eval()
     with torch.no_grad():
-        preds = torch.argmax(model(toy_X), dim=-1)
+        preds = torch.argmax(model(toy_X), dim=-1) #returns the indices of the maximum value of all elements in the input tensor 
         print(f"Predictions: {preds.tolist()}")
         print(f"Ground Truth: {toy_y.tolist()}")
 

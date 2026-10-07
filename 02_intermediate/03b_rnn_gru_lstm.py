@@ -41,7 +41,7 @@
 
 Purpose:
     This script compares the three major recurrent layer engines in PyTorch side by side:
-    1. Standard Vanilla RNN (nn.RNN)
+    1. Standard Vanilla RNN (nn.RNN) (Recurrent Neural Network)
     2. Gated Recurrent Unit (nn.GRU)
     3. Long Short-Term Memory (nn.LSTM)
 
@@ -86,7 +86,7 @@ def main():
     print(f"  Outputs Shape:      {rnn_out.shape} [Batch, Seq_Len, Hidden_Size]")
     print(f"  Hidden State Shape: {rnn_hn.shape}  [Num_Layers, Batch, Hidden_Size]")
     # Practical Note: Simple, but forgets early information on longer sequences (vanishing gradient).
-
+    
     # ------------------------------------------------------------------
     # 2. GATED RECURRENT UNIT (nn.GRU)
     # ------------------------------------------------------------------
@@ -112,6 +112,8 @@ def main():
     print(f"  Hidden State (hn):  {lstm_hn.shape}  [Num_Layers, Batch, Hidden_Size]")
     print(f"  Cell State (cn):    {lstm_cn.shape}  [Num_Layers, Batch, Hidden_Size]")
     # Practical Note: 'hn' handles short-term working memory; 'cn' acts as a long-term highway memory.
+    # Extract the final layer using lstm_hn[-1] to pass into your linear classifier. (just like you would with rnn_hn[-1] or gru_hn[-1]).
+    # The cell state acts like an internal conveyor belt that helps carry long-term information through the sequence without losing it (using gates).
 
     print("\n" + "=" * 60)
     print("SUMMARY FOR BEGINNERS:")
