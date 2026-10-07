@@ -54,7 +54,7 @@ class RNNLanguageModel(nn.Module):
 def sample_next_char(logits, temperature=1.0):
     """Applies Softmax temperature scaling and samples an index from the resulting probability distribution."""
     # Scale logits by temperature. Higher temperature increases randomness; lower increases confidence.
-    logits = logits / max(temperature, 1e-5)
+    logits = logits / max(temperature, 1e-5) #1e-5 is scientific notation for 0.00001
     probs = torch.softmax(logits, dim=-1).numpy()
     # Draw index randomly according to computed probabilities
     return np.random.choice(len(probs), p=probs)
