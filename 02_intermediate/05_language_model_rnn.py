@@ -55,8 +55,9 @@ def sample_next_char(logits, temperature=1.0):
     """Applies Softmax temperature scaling and samples an index from the resulting probability distribution."""
     # Scale logits by temperature. Higher temperature increases randomness; lower increases confidence.
     logits = logits / max(temperature, 1e-5) #1e-5 is scientific notation for 0.00001
+    #softmax will raw numbers and convert them to probabilities that sum to 1.0
     probs = torch.softmax(logits, dim=-1).numpy()
-    # Draw index randomly according to computed probabilities
+    # Draw index randomly according to computed probabilities (avoid boring and rigid argmax selection)
     return np.random.choice(len(probs), p=probs)
 
 def main():
@@ -83,7 +84,6 @@ def main():
     print("encoded_text 1: :", dict(list(enumerate(encoded_text))[1:])) #maps to "ello worl..."
     print("encoded_text :-1:", dict(list(enumerate(encoded_text))[:-1])) #maps to "hello worl..."
     
-
     # For autoregressive learning, target outputs are shifted right by 1 index:
     # Input sequence:  "h" "e" "l" "l" "o"
     # Target sequence: "e" "l" "l" "o" " "
@@ -110,11 +110,14 @@ def main():
     for epoch in range(epochs):
         # In complete text training, we often preserve the recurrent state across sequence windows.
         # But we must detach these states from their historical autograd nodes to prevent 
-        # backpropagating infinitely through time, which would exhaust memory (BPTT).
-        outputs, _ = model(inputs)
+        # backpropagating infinitely through time, which would exhaust memory (BPTT Backpropagation Through Time algorithm).
+        # With .detach(): You cut the flowchart links to the past. The model keeps its memories, but forgets the mathematical baggage. GPU memory usage stays low and constant.
+        outputs, hidden = model(inputs)
+        hidden = (hidden[0].detach(), hidden[1].detach())
         
         # Flatten outputs and targets for CrossEntropyLoss computation
         # outputs shape: [Batch * Seq_Len, Vocab_Size], targets shape: [Batch * Seq_Len]
+        #tensor.view(-1, size) will reshape the tensor into a 2D grid (a matrix) where the second dimension is exactly size
         loss = criterion(outputs.view(-1, vocab_size), targets.view(-1))
         
         optimizer.zero_grad()
@@ -139,7 +142,7 @@ def main():
         logits, hidden = model(current_input)
         
         # Generate subsequent characters one-by-one
-        number_of_chars_to_generate = 30
+        number_of_chars_to_generate = 31
         for _ in range(number_of_chars_to_generate):
             # Pick the final step logit corresponding to our last generated character
             # During character-by-character text generation:
