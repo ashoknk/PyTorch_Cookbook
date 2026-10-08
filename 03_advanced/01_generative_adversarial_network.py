@@ -1,11 +1,21 @@
 """
 13. Deep Convolutional Generative Adversarial Network (DCGAN) with PyTorch
 
+A Deep Convolutional Generative Adversarial Network (DCGAN) is an extension of the standard 
+Generative Adversarial Network (GAN) that uses Convolutional Neural Networks (CNNs) in 
+both the generator and discriminator to synthesize realistic images from random noise. 
+Create brand new, synthetic images out of random noise
+
 This script demonstrates how to construct and optimize a Deep Convolutional 
 Generative Adversarial Network (DCGAN). GANs use a zero-sum minimax game between 
 two competing modules: a Generator that synthesizes images from random noise 
 vectors, and a Discriminator that classifies inputs as authentic (real) or 
 fabricated (fake). We train on pre-downloaded FashionMNIST images.
+Some other data types we can use are Photos / Faces, Fashion & Products, Medical Imaging.
+
+This code builds a Generative Adversarial Network (GAN). It takes completely random numerical noise 
+and transforms it into realistic, brand-new grayscale images of clothing items (from FashionMNIST) 
+that look like real product photos, even though they were generated entirely by AI. 
 
 Learning Objectives:
 1. Construct a Generator utilizing spatial transpose convolutions (ConvTranspose2d).
@@ -49,7 +59,8 @@ class Generator(nn.Module):
             
             # 64 x 14 x 14 -> out_channels x 28 x 28
             nn.ConvTranspose2d(64, out_channels, kernel_size=4, stride=2, padding=1, bias=False),
-            # Tanh activation squashes output pixel channels to [-1.0, 1.0] range
+            # Tanh activation function squashes output pixel channels to [-1.0, 1.0] range
+            #Documentation: https://pytorch.org/docs/stable/generated/torch.nn.Tanh.html
             nn.Tanh()
         )
 
@@ -67,6 +78,7 @@ class Discriminator(nn.Module):
         # Strided Conv2d layers map a 28x28 image to a single probability confidence score.
         # We do not use max pooling here; downsampling is handled by stride=2.
         # Documentation: https://pytorch.org/docs/stable/generated/torch.nn.Conv2d.html
+        # self.main is an instance attribute containing a callable object. The input tensor z and automatically passes it through every layer
         self.main = nn.Sequential(
             # Input: in_channels x 28 x 28 -> 32 x 14 x 14
             nn.Conv2d(in_channels, 32, kernel_size=4, stride=2, padding=1, bias=False),
@@ -106,7 +118,9 @@ def main():
 
     # Initialize weights
     latent_dim = 100
+    # The Generator (netG) — "The Forger": Tries to paint fake images of clothing items (like shoes, shirts, or dresses) to trick the discriminator
     netG = Generator(latent_dim=latent_dim).to(device)
+    # The Discriminator (netD) — "The Art Inspector": Looks at real images from the dataset and fake images created by the Generator. Outputs a score from 0.0 (Fake) to 1.0 (Real).
     netD = Discriminator().to(device)
 
     # Setup loss and optimizers
@@ -160,11 +174,45 @@ def main():
         optimizerG.zero_grad()
         lossG.backward()
         optimizerG.step()
-        
-        if (batch_idx + 1) % 10 == 0:
-            print(f"  Step [{batch_idx+1}/30] | Loss_D: {lossD.item():.4f} | Loss_G: {lossG.item():.4f}")
 
+        # ==========================================
+        # CALCULATE DISCRIMINATOR ACCURACY & METRICS
+        # ==========================================
+        # Average confidence scores (0.0 to 1.0)
+        D_x = output_real.mean().item()           # How real the Discriminator thinks real images are
+        D_G_z1 = output_fake.mean().item()         # How real the Discriminator thinks fake images are
+        
+        # Calculate percentage accuracy
+        acc_real = (output_real > 0.5).float().mean().item() * 100
+        acc_fake = (output_fake < 0.5).float().mean().item() * 100
+        d_acc = (acc_real + acc_fake) / 2.0
+
+        # Calculate and print Real Accuracy and Fake Accuracy
+
+        if (batch_idx + 1) % 10 == 0:
+            print(f"\nStep [{batch_idx+1}/30] | Loss_D: {lossD.item():.4f} | Loss_G: {lossG.item():.4f} "
+                  f"Real Acc: {acc_real:.1f}% | Fake Acc: {acc_fake:.1f}% | "
+                  f"Avg D(x): {D_x:.2f} | Avg D(G(z)): {D_G_z1:.2f}")
+            # print(f"  Step [{batch_idx+1}/30] | Loss_D: {lossD.item():.4f} | Loss_G: {lossG.item():.4f}")
+    
     print("DCGAN validation complete. Networks compiled and executed without errors!")
 
 if __name__ == "__main__":
     main()
+
+"""
+    Discriminator Performance Metrics:
+        - Real Acc (85.2%): The Discriminator correctly classified 85.2% of real images 
+        as real (score > 0.5).
+        - Fake Acc (82.0%): The Discriminator correctly identified 82.0% of generated fake 
+        images as fake (score < 0.5).
+        - Avg D(x) (0.81): On average, the Discriminator gives real images an 81% 
+        probability score of being real.
+        - Avg D(G(z)) (0.18): On average, the Discriminator gives generated images only an 
+        18% chance of being real (meaning it successfully catches fakes).
+
+    Training Dynamics:
+        If Fake Acc drops close to 0% early on, the Discriminator is failing. 
+        If Fake Acc stays at 100% forever without dropping as epochs progress, 
+        the Generator is failing to improve.
+"""
