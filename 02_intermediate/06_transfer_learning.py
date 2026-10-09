@@ -14,15 +14,17 @@ Learning Objectives:
 """
 
 # We import the core torch library.
-import torch
+import os
 
+import torch
 # nn contains container and linear mapping classes.
 import torch.nn as nn
 
 # optim contains optimization engines.
 import torch.optim as optim
 
-
+# Point the Torch Home folder directly to your current working directory ('.')
+os.environ['TORCH_HOME'] = '.'
 
 # torchvision.models contains state-of-the-art vision models.
 # Documentation: https://torchvision.org/stable/models.html
