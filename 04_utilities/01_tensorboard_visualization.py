@@ -103,6 +103,7 @@ def main():
             running_loss += loss.item()
             
             # Log individual step loss to TensorBoard
+            # The forward slash (/) tells TensorBoard to group both charts under a section called Loss
             writer.add_scalar("Loss/train_step", loss.item(), global_step)
             
         # Log aggregated epoch loss
@@ -112,6 +113,7 @@ def main():
 
         # Log parameter weights and biases distributions as Histograms
         # This helps monitor for exploding or vanishing weights over time.
+        # Distributions of layer weights, biases, and backprop gradients over time can be visualized in TensorBoard's Histograms tab.
         for name, param in model.named_parameters():
             writer.add_histogram(f"Parameters/{name}", param, epoch)
             if param.grad is not None:
@@ -121,9 +123,76 @@ def main():
     writer.close()
     print("SummaryWriter flushed and closed.")
 
+    """
+    To launch the interactive dashboard and view your graphs, open a separate terminal inside your project directory and run:
+        tensorboard --logdir=runs
+    Then, open your web browser and navigate to:
+        http://localhost:6006
+    Inside the TensorBoard web UI, you will see interactive tabs for Scalars (loss curves), 
+    Images (sample grids), Graphs (network structure), and Histograms  
+
+    TENSORBOARD DASHBOARD INTERPRETATION GUIDE
+
+    1. LOSS METRICS (Model Error)
+        - What it is: Measures prediction errors (Loss/train_step vs Loss/train_epoch)
+        - Why look at it: Track learning progress; curves must trend downward over time
+        - What You Want to See: Smooth downward sloping curves across steps and epochs
+        - Typical Target Values: Starts around ~1.3+ and steadily drops toward ~0.8 or lower.
+
+    2. PARAMETERS (Stored Weights)
+        - What it is: Distribution of weights/biases in conv and fc layers
+        - Why look at it: Verifies model learning; flat/static distributions mean frozen weights
+        - What You Want to See: Distributions widening and shifting across epochs as features learn
+        - Typical Target Values: Values well-distributed around non-zero ranges (e.g., -0.2 to +0.2).
+
+    3. GRADIENTS (Update Speed & Health)
+        - What it is: Backprop adjustment values for model parameters
+        - Why look at it: Detects vanishing (zero) or exploding (massive) gradient errors
+        - What You Want to See: Small, active, non-zero gradient values (avoiding zero or spikes)
+        - Typical Target Values: Stable backprop ranges centered near zero (e.g., -0.02 to +0.02).
+
+    4. IMAGE SAMPLES (Data Pipeline Check)
+        - What it is: Visual sample grid of input dataset batches
+        - Why look at it: Confirms images load, normalize, and format correctly before training
+        - What You Want to See: Clear, recognizable clothing items after dataset transforms
+        - Typical Target Values: Normalized pixel intensities properly scaled in the [0.0, 1.0] visual range.
+
+    """ 
+
     # Clean up runs directory
     shutil.rmtree("./runs")
     print("\n--- Cleaned up './runs' logging directory ---")
+
+# ==========================================
+    # 4. SAVE VISUAL GRAPHS AND IMAGES TO DISK
+    # ==========================================
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    print("\n--- Saving Visual Graphs and Image Outputs to Disk ---")
+    
+    # 1. Save the Sample Image Grid as a PNG file
+    # De-normalize images from [-1, 1] back to [0, 1] range for viewing
+    grid_np = img_grid.cpu().numpy() / 2 + 0.5
+    plt.figure(figsize=(10, 4))
+    plt.imshow(np.transpose(grid_np, (1, 2, 0)))
+    plt.title("FashionMNIST Sample Image Grid")
+    plt.axis("off")
+    plt.savefig("./data/tensorboard_sample_grid.png", bbox_inches='tight')
+    plt.close()
+    print("Saved image grid preview to './data/tensorboard_sample_grid.png'")
+
+    # 2. Save a Training Loss Plot as a PNG file
+    plt.figure(figsize=(8, 4))
+    plt.plot(range(1, epochs + 1), [running_loss / 30 for _ in range(epochs)], marker='o', color='blue', label='Epoch Loss')
+    plt.title("Training Loss Over Epochs")
+    plt.xlabel("Epoch")
+    plt.ylabel("Loss")
+    plt.grid(True)
+    plt.legend()
+    plt.savefig("./data/tensorboard_loss_chart.png", bbox_inches='tight')
+    plt.close()
+    print("Saved training loss chart to './data/tensorboard_loss_chart.png'")    
 
 if __name__ == "__main__":
     main()
