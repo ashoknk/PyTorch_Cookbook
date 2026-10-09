@@ -132,7 +132,7 @@ def main():
     # style_img = torch.randn(1, 3, 224, 224).to(device)
     # Pass real image file paths here
     content_img = load_image("data/cats/cat1.jpg").to(device)
-    style_img = load_image("data/art_style4.jpg").to(device)
+    style_img = load_image("data/art_style/art_style4.jpg").to(device)
     
     # We initialize our target output canvas directly as a clone of the content image.
     # We set requires_grad = True on the target canvas, telling PyTorch that we want 
