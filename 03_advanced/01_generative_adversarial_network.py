@@ -2,23 +2,22 @@
 13. Deep Convolutional Generative Adversarial Network (DCGAN) with PyTorch
 
 A Generative Adversarial Network (GAN) is a machine learning framework that uses two neural networks 
-competing against each other to create realistic synthetic data. 
-The Generator network creates new data instances, while the Discriminator network evaluates them for authenticity. 
-The goal of the Generator is to produce data that is indistinguishable from real data, 
-while the Discriminator aims to correctly identify whether the data is real or generated.
+competing against each other . 
+a.The Generator network creates new data instances. 
+  The goal is to produce data that is fake but indistinguishable from real data. 
+b.The Discriminator network evaluates them for authenticity.
+   It aims to correctly identify whether the data is real or generated.
 
 A Deep Convolutional Generative Adversarial Network (DCGAN) is an extension of the standard 
 Generative Adversarial Network (GAN) that uses Convolutional Neural Networks (CNNs) in 
 both the generator and discriminator to synthesize realistic images from random noise. 
-Create brand new, synthetic images out of random noise. 
 No more flattening: It keeps images in their natural 2D shapes.
 
-This script demonstrates how to construct and optimize a Deep Convolutional 
-Generative Adversarial Network (DCGAN). We train on pre-downloaded FashionMNIST images.
+This script demonstrates how to construct and optimize a DCGAN. We train on pre-downloaded FashionMNIST images.
 Some other data types we can use are Photos / Faces, Fashion & Products, Medical Imaging.
 
-This code takes completely random numerical noise 
-and transforms it into realistic, brand-new grayscale images of clothing items (from FashionMNIST) 
+This code takes completely random numerical noise and transforms it into 
+realistic, brand-new grayscale images of clothing items (from FashionMNIST) 
 that look like real product photos, even though they were generated entirely by AI. 
 
 Learning Objectives:
@@ -50,19 +49,20 @@ class Generator(nn.Module):
         # ConvTranspose2d layers (deconvolutions) project low-resolution inputs 
         # to higher resolutions. We map a 1x1 noise vector of size latent_dim to a 28x28 image.
         # Documentation: https://pytorch.org/docs/stable/generated/torch.nn.ConvTranspose2d.html
+        # self.main is an instance attribute containing a callable object. The input tensor z and automatically passes it through every layer
         self.main = nn.Sequential(
             # Input: latent_dim x 1 x 1 -> 128 x 7 x 7
-            nn.ConvTranspose2d(latent_dim, 128, kernel_size=7, stride=1, padding=0, bias=False),
+            nn.ConvTranspose2d(in_channels=latent_dim, out_channels=128, kernel_size=7, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(128),
             nn.ReLU(True),
             
             # 128 x 7 x 7 -> 64 x 14 x 14
-            nn.ConvTranspose2d(128, 64, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.ReLU(True),
             
             # 64 x 14 x 14 -> out_channels x 28 x 28
-            nn.ConvTranspose2d(64, out_channels, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.ConvTranspose2d(in_channels=64, out_channels=out_channels, kernel_size=4, stride=2, padding=1, bias=False),
             # Tanh activation function squashes output pixel channels to [-1.0, 1.0] range
             #Documentation: https://pytorch.org/docs/stable/generated/torch.nn.Tanh.html
             nn.Tanh()
@@ -70,6 +70,8 @@ class Generator(nn.Module):
 
     def forward(self, z):
         # Ensure input noise has spatial shape: [Batch, Latent_Dim, 1, 1]
+        # It takes a 2D batch of latent noise vectors z (usually shaped [Batch Size, Latent Dimension]) 
+        # and reshapes it into a 4D tensor of shape [Batch Size, Latent Dimension, 1, 1].
         z = z.view(z.size(0), z.size(1), 1, 1)
         return self.main(z)
 
@@ -85,24 +87,25 @@ class Discriminator(nn.Module):
         # self.main is an instance attribute containing a callable object. The input tensor z and automatically passes it through every layer
         self.main = nn.Sequential(
             # Input: in_channels x 28 x 28 -> 32 x 14 x 14
-            nn.Conv2d(in_channels, 32, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Conv2d(in_channels=in_channels, out_channels=32, kernel_size=4, stride=2, padding=1, bias=False),
             # LeakyReLU prevents zero gradient bottlenecks on inactive units
+            # Documentation: https://pytorch.org/docs/stable/generated/torch.nn.LeakyReLU.html
             nn.LeakyReLU(0.2, inplace=True),
             
             # 32 x 14 x 14 -> 64 x 7 x 7
-            nn.Conv2d(32, 64, kernel_size=4, stride=2, padding=1, bias=False),
+            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=4, stride=2, padding=1, bias=False),
             nn.BatchNorm2d(64),
             nn.LeakyReLU(0.2, inplace=True),
             
             # 64 x 7 x 7 -> 1 x 1 x 1
-            nn.Conv2d(64, 1, kernel_size=7, stride=1, padding=0, bias=False),
+            nn.Conv2d(in_channels=64, out_channels=1, kernel_size=7, stride=1, padding=0, bias=False),
             # Sigmoid outputs a probability score between 0 (fake) and 1 (real)
             nn.Sigmoid()
         )
 
     def forward(self, img):
         out = self.main(img)
-        # Flatten outputs to single scores [Batch, 1]
+        # Flatten outputs to single scores [Batch, 1] -> a 2D tensor of shape [Batch Size, Total Features]
         return out.view(out.size(0), -1)
 
 def main():
@@ -120,11 +123,13 @@ def main():
     dataset = torchvision.datasets.FashionMNIST(root='./data', train=True, transform=transform, download=False)
     dataloader = torch.utils.data.DataLoader(dataset, batch_size=128, shuffle=True)
 
-    # Initialize weights
+    # Initialize weights. An industry-standard heuristic that provides a balanced balance between capacity and trainability 
     latent_dim = 100
-    # The Generator (netG) — "The Forger": Tries to paint fake images of clothing items (like shoes, shirts, or dresses) to trick the discriminator
+    # The Generator (netG) — "The Forger": 
+    # Tries to paint fake images of clothing items (like shoes, shirts, or dresses) to trick the discriminator
     netG = Generator(latent_dim=latent_dim).to(device)
-    # The Discriminator (netD) — "The Art Inspector": Looks at real images from the dataset and fake images created by the Generator. Outputs a score from 0.0 (Fake) to 1.0 (Real).
+    # The Discriminator (netD) — "The Art Inspector": 
+    # Looks at real images from the dataset and fake images created by the Generator. Outputs a score, 0.0 (Fake) to 1.0 (Real).
     netD = Discriminator().to(device)
 
     # Setup loss and optimizers
@@ -133,7 +138,7 @@ def main():
     criterion = nn.BCELoss()
     optimizerD = optim.Adam(netD.parameters(), lr=0.0002, betas=(0.5, 0.999))
     optimizerG = optim.Adam(netG.parameters(), lr=0.0002, betas=(0.5, 0.999))
-
+    
     # ==========================================
     # 4. ADVERSARIAL MINIMAX OPTIMIZATION LOOP
     # ==========================================
@@ -156,12 +161,16 @@ def main():
         
         # Train on real images
         output_real = netD(real_images)
+        # When you show Discriminator a real image, you compare its guess to label_real (1). 
+        # If it guesses 0.9, it gets an 'A'. If it guesses 0.2, it fails.
+       
         lossD_real = criterion(output_real, label_real)
         
         # Train on fake images generated from random noise vectors
         noise = torch.randn(batch_size, latent_dim).to(device)
         fake_images = netG(noise)
         output_fake = netD(fake_images.detach())
+        # When you show it an AI-generated image, you compare its guess to label_fake (0).
         lossD_fake = criterion(output_fake, label_fake)
         
         lossD = lossD_real + lossD_fake
@@ -205,6 +214,7 @@ if __name__ == "__main__":
     main()
 
 """
+    === Example ===
     Discriminator Performance Metrics:
         - Real Acc (85.2%): The Discriminator correctly classified 85.2% of real images 
         as real (score > 0.5).
@@ -215,12 +225,12 @@ if __name__ == "__main__":
         - Avg D(G(z)) (0.18): On average, the Discriminator gives generated images only an 
         18% chance of being real (meaning it successfully catches fakes).
 
-    Training Dynamics:
+    === Training Dynamics ===
         If Fake Acc drops close to 0% early on, the Discriminator is failing. 
         If Fake Acc stays at 100% forever without dropping as epochs progress, 
         the Generator is failing to improve.
 
-    SUMMARY & INTERPRETATION:
+    === SUMMARY & INTERPRETATION ===
     - Both networks are learning cleanly! Loss_D is hovering around ~0.8 to ~1.3, 
     which indicates a balanced game where neither network is completely crushing the other.
     - Early Steps (10-40): The Discriminator easily caught fakes (Fake Acc ~98%).
