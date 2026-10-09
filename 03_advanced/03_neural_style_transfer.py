@@ -9,8 +9,8 @@ Unlike a simple color tint or Instagram filter, NST uses a deep neural network (
 It then optimizes a blank canvas image pixel-by-pixel until the content matches image #1 and the texture matches image #2.
 
 Situations and Data Types to Use NST:
-    Digital Art & Design: Turning real photographs into oil paintings, sketches, or pop-art graphics.
-    Gaming & Animation: Transferring texture styles to 3D game models or environment concept art.
+    a. Digital Art & Design: Turning real photographs into oil paintings, sketches, or pop-art graphics.
+    b. Gaming & Animation: Transferring texture styles to 3D game models or environment concept art.
 
 This script demonstrates how to perform Neural Style Transfer (NST). NST extracts 
 intermediate features from a pre-trained CNN (VGG-19) to blend the semantic 
@@ -32,6 +32,9 @@ import torch
 import ssl
 import os
 ssl._create_default_https_context = ssl._create_unverified_context
+# Point the Torch Home folder directly to your current working directory ('.')
+os.environ['TORCH_HOME'] = '.'
+
 from PIL import Image
 import torchvision.transforms as transforms
 
@@ -57,10 +60,13 @@ class VGGFeatureExtractor(nn.Module):
         
         # We slice VGG-19 layers. We select 'conv1_1', 'conv2_1', 'conv3_1', 'conv4_1', 'conv5_1' 
         # for style representation, and 'conv4_2' for content representation.
+        # When we run the image through the VGG-19 network assembly line, we need you to take a snapshot at station 0, station 5, station 10, etc."
         self.style_layers = {'0': 'conv1_1', '5': 'conv2_1', '10': 'conv3_1', '19': 'conv4_1', '28': 'conv5_1'}
         self.content_layers = {'21': 'conv4_2'}
         
         # Build self-contained feature sub-networks up to conv5_1 (index 29)
+        # Think of the VGG-19 network as an assembly line with 30+ sequential stations (layers).
+        # An image goes into station 0, gets transformed, passes to station 1, then station 2, all the way to the end.
         self.features = vgg[:30]
         # Freeze VGG parameters since we only use it as a static feature extractor
         for param in self.features.parameters():
@@ -73,7 +79,8 @@ class VGGFeatureExtractor(nn.Module):
         
         # Feed inputs sequentially layer-by-layer
         for name, layer in self.features._modules.items():
-            x = layer(x)
+            x = layer(x) #layer_0(x), layer_1(x), layer_2(x), ...
+            print(f"Layer {name}: Output shape: {x.shape}")
             if name in self.style_layers:
                 style_features[self.style_layers[name]] = x
             if name in self.content_layers:
