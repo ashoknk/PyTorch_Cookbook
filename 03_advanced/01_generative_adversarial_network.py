@@ -1,19 +1,23 @@
 """
 13. Deep Convolutional Generative Adversarial Network (DCGAN) with PyTorch
 
+A Generative Adversarial Network (GAN) is a machine learning framework that uses two neural networks 
+competing against each other to create realistic synthetic data. 
+The Generator network creates new data instances, while the Discriminator network evaluates them for authenticity. 
+The goal of the Generator is to produce data that is indistinguishable from real data, 
+while the Discriminator aims to correctly identify whether the data is real or generated.
+
 A Deep Convolutional Generative Adversarial Network (DCGAN) is an extension of the standard 
 Generative Adversarial Network (GAN) that uses Convolutional Neural Networks (CNNs) in 
 both the generator and discriminator to synthesize realistic images from random noise. 
-Create brand new, synthetic images out of random noise
+Create brand new, synthetic images out of random noise. 
+No more flattening: It keeps images in their natural 2D shapes.
 
 This script demonstrates how to construct and optimize a Deep Convolutional 
-Generative Adversarial Network (DCGAN). GANs use a zero-sum minimax game between 
-two competing modules: a Generator that synthesizes images from random noise 
-vectors, and a Discriminator that classifies inputs as authentic (real) or 
-fabricated (fake). We train on pre-downloaded FashionMNIST images.
+Generative Adversarial Network (DCGAN). We train on pre-downloaded FashionMNIST images.
 Some other data types we can use are Photos / Faces, Fashion & Products, Medical Imaging.
 
-This code builds a Generative Adversarial Network (GAN). It takes completely random numerical noise 
+This code takes completely random numerical noise 
 and transforms it into realistic, brand-new grayscale images of clothing items (from FashionMNIST) 
 that look like real product photos, even though they were generated entirely by AI. 
 
@@ -215,4 +219,13 @@ if __name__ == "__main__":
         If Fake Acc drops close to 0% early on, the Discriminator is failing. 
         If Fake Acc stays at 100% forever without dropping as epochs progress, 
         the Generator is failing to improve.
+
+    SUMMARY & INTERPRETATION:
+    - Both networks are learning cleanly! Loss_D is hovering around ~0.8 to ~1.3, 
+    which indicates a balanced game where neither network is completely crushing the other.
+    - Early Steps (10-40): The Discriminator easily caught fakes (Fake Acc ~98%).
+    - Middle/Late Steps (50-100): The Generator improved, pushing Avg D(G(z)) up to ~0.50 
+    and dropping Discriminator accuracy to ~66%. This shows the Generator is learning 
+    to produce much more convincing clothing images.
+        
 """
