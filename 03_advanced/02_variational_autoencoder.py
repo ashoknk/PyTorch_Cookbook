@@ -4,6 +4,9 @@
 A Variational Autoencoder (VAE) in PyTorch is a generative deep learning architecture that compresses 
 input data into a continuous, probabilistic latent space and reconstructs it back into new data samples.
 
+ex. a. Reconstructs an input image of a "7". 
+    b. Compresses a photo of a person to save space. Generates non-existent human faces, or allows you to add glasses to an existing face by tweaking a single latent vector
+
 VAE DATA FLOW ARCHITECTURE
 
     Input Image Tensor (images / x)
@@ -195,7 +198,7 @@ def main():
         
         if (batch_idx + 1) % 10 == 0:
             print(f"  Step [{batch_idx+1}/30], Loss: {loss.item() / images.size(0):.4f}")
-
+        
     # ==========================================
     # 5. SAMPLE GENERATION FROM LATENT PRIOR
     # ==========================================
