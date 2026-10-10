@@ -136,7 +136,7 @@ class DecoderLayer(nn.Module):
         return x
 
 # ==========================================
-# 4. FULL ENCODER-DECODER TRANSCRIPT ASSEMBLY
+# 4. FULL ENCODER-DECODER TRANSFORMER ASSEMBLY
 # ==========================================
 class Transformer(nn.Module):
     def __init__(self, src_vocab_size, trg_vocab_size, d_model=256, num_heads=8, num_layers=2):
@@ -151,6 +151,11 @@ class Transformer(nn.Module):
         self.fc_out = nn.Linear(d_model, trg_vocab_size)
 
     def forward(self, src, trg, src_mask=None, trg_mask=None):
+        """Return target-vocabulary logits with shape [batch, target_length, trg_vocab_size].
+
+        The final dimension contains one score per target token ID. Convert the
+        highest-scoring ID to a word with the vocabulary used by the caller.
+        """
         # 4.1 Process Source: Embed + PE -> Encoder stack
         enc_out = self.pe(self.src_embedding(src))
         for layer in self.encoder:
@@ -161,5 +166,5 @@ class Transformer(nn.Module):
         for layer in self.decoder:
             dec_out = layer(dec_out, enc_out, src_mask, trg_mask)
             
-        # 4.3 Project to target vocabulary probability scores
+        # 4.3 Project to one logit per target-vocabulary token ID
         return self.fc_out(dec_out)

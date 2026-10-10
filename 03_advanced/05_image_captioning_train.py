@@ -26,7 +26,9 @@ import torch.optim as optim
 # We import importlib to load modules with names starting with numbers.
 # In standard Python, 'import 04_image_captioning_model' is invalid syntax.
 # Documentation: https://docs.python.org/3/library/importlib.html
+import sys
 import importlib
+sys.path.append(".")  # Adds the current working directory to Python's module search path
 model_module = importlib.import_module("03_advanced.04_image_captioning_model")
 EncoderCNN = model_module.EncoderCNN
 DecoderRNN = model_module.DecoderRNN
@@ -63,13 +65,14 @@ def main():
     print("--- Simulating Multimodal Training Epochs ---")
     
     # 2.1 Generate 2 synthetic RGB images of size 224x224
+    # Row 1 corresponds to synthetic_images[0] and Row 2 corresponds to synthetic_images[1]
     synthetic_images = torch.randn(2, 3, 224, 224).to(device)
     
     # 2.2 Generate matching tokenized caption targets (representing sequence: "<START> dog runs outside <END>")
     # Captions shape: [Batch_Size, Seq_Len]
     synthetic_captions = torch.tensor([
-        [1, 3, 4, 5, 2],
-        [1, 3, 5, 4, 2]
+        [1, 3, 4, 5, 2], #e.g., "<START> dog runs outside <END>"
+        [1, 3, 5, 4, 2] #e.g., "<START> dog outside runs <END>"
     ], dtype=torch.long).to(device)
 
     encoder.train()
@@ -85,6 +88,7 @@ def main():
         
         # We calculate Cross Entropy loss across the entire vocabulary over all sequence timesteps.
         # We reshape output logits to [Batch * Seq_Len, Vocab_Size] and targets to [Batch * Seq_Len].
+        # 3D tensor into a 2D matrix
         loss = criterion(outputs.view(-1, vocab_size), synthetic_captions.view(-1))
         
         # Backward optimization pass
@@ -112,3 +116,35 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+"""
+FUTURE ENHANCEMENTS: TRANSLATING RAW TOKEN PREDICTIONS INTO HUMAN TEXT
+
+Currently, script 05 outputs raw numerical token indices (e.g., [1, 3, 4, 5, 2]). 
+To convert this pipeline into a real-world, end-to-end caption generator, 
+the following 4 modifications would be required:
+
+1. Build a Complete Vocabulary Mapping Dictionary:
+   Replace the toy vocabulary size (6) with a real dictionary (e.g., 10,000+ words) 
+   that maps integer token IDs to human words, including special markers like 
+   <PAD>, <START>, <END>, and <UNK> (unknown words).
+
+2. Add a Text Decoder Utility Function:
+   Implement a helper function that takes the predicted token ID array, 
+   filters out special control tokens (<START>, <END>, <PAD>), looks up each ID 
+   in the dictionary, and joins them with spaces into a clean string.
+
+3. Implement Word-by-Word Output Generation (Real-World Prediction Loop):
+   During training, the code passes the correct answer (`synthetic_captions`) directly 
+   into the decoder's `for t in range(seq_length)` loop to help it learn. 
+   In a real-world scenario where you don't have the answer beforehand, you must change 
+   this loop so the model feeds its own freshly predicted word from step 1 into step 2 
+   as the input, continuing word-by-word until it predicts the <END> token.
+   (Relates to: Section 2 in 05_image_captioning_train.py and the `forward` method in DecoderRNN).
+
+4. Integrate Visual Attention Heatmap Overlay:
+   Extract the attention weights returned by the Attention module at each timestep 
+   to project a visual highlight (heatmap) back onto the original input image, 
+   allowing users to see which visual regions generated each word.
+"""
