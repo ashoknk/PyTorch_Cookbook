@@ -12,6 +12,9 @@ Situations and Data Types to Use NST:
     a. Digital Art & Design: Turning real photographs into oil paintings, sketches, or pop-art graphics.
     b. Gaming & Animation: Transferring texture styles to 3D game models or environment concept art.
 
+The Gram Matrix measures correlations between feature channels (textures/styles)
+independent of their spatial locations, capturing the artistic "style" of an image.
+
 This script demonstrates how to perform Neural Style Transfer (NST). NST extracts 
 intermediate features from a pre-trained CNN (VGG-19) to blend the semantic 
 layout of a "Content" image with the artistic style of a "Style" image. We 
@@ -33,7 +36,7 @@ import ssl
 import os
 ssl._create_default_https_context = ssl._create_unverified_context
 # Point the Torch Home folder directly to your current working directory ('.')
-os.environ['TORCH_HOME'] = '.'
+os.environ['TORCH_HOME'] = './data/'
 
 from PIL import Image
 import torchvision.transforms as transforms
@@ -80,7 +83,7 @@ class VGGFeatureExtractor(nn.Module):
         # Feed inputs sequentially layer-by-layer
         for name, layer in self.features._modules.items():
             x = layer(x) #layer_0(x), layer_1(x), layer_2(x), ...
-            print(f"Layer {name}: Output shape: {x.shape}")
+            # print(f"Layer {name}: Output shape: {x.shape}")
             if name in self.style_layers:
                 style_features[self.style_layers[name]] = x
             if name in self.content_layers:
@@ -97,11 +100,14 @@ def get_gram_matrix(tensor):
     capturing artistic textures independent of visual geometry."""
     # tensor shape: [1, Channels, Height, Width]
     b, c, h, w = tensor.size()
-    # Flatten spatial height and width
+    # Flatten spatial height and width. Matrix shape becomes [Channels, Spatial_Pixels].
     features = tensor.view(b * c, h * w)
     # Compute outer product: Gram = F * F^T
+    # Multiplying the feature matrix by its transpose (features * features.t()) compares every feature channel against all others.
+    # The resulting square [Channels, Channels] matrix shows texture correlations:
+    #  high numbers mean those textures appear together often, while low numbers mean they don't.
     # Documentation: https://pytorch.org/docs/stable/generated/torch.mm.html
-    gram = torch.mm(features, features.t())
+    gram = torch.mm(features, features.t()) # matrix multiplication
     # Normalize by dividing by total activation volume size to prevent huge loss scores
     return gram.div(b * c * h * w)
 
@@ -125,7 +131,7 @@ def load_image(image_path, image_size=(224, 224)):
         pil_img = transforms.ToPILImage()(dummy_tensor)
         pil_img.save(image_path)
         
-        return dummy_tensor.unsqueeze(0)
+        return dummy_tensor.unsqueeze(0) # inserts a new dimension of size 1 
 
 def main():
     device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
@@ -138,20 +144,22 @@ def main():
     # content_img = torch.randn(1, 3, 224, 224).to(device)
     # style_img = torch.randn(1, 3, 224, 224).to(device)
     # Pass real image file paths here
-    content_img = load_image("data/cats/cat1.jpg").to(device)
+    content_img = load_image("data/dogs/dog1.jpg").to(device)
     style_img = load_image("data/art_style/art_style4.jpg").to(device)
     
     # We initialize our target output canvas directly as a clone of the content image.
     # We set requires_grad = True on the target canvas, telling PyTorch that we want 
-    # to update the visual pixel values themselves during optimization!
+    # to update the visual pixel values themselves during optimization (of the image pixels themselves,)!
     target_canvas = content_img.clone().requires_grad_(True).to(device)
 
     # Initialize VGG extractor and extract source features
+    #VGG-19 breaks that specific painting down into feature maps that contains the raw data about what colors, patterns, and brushstrokes 
     extractor = VGGFeatureExtractor().to(device)
     content_targets, _ = extractor(content_img)
-    _, style_targets = extractor(style_img)
+    _, style_targets = extractor(style_img) 
     
     # Compute Gram Matrices for style targets
+    # Calculates the correlations between channels, stripping away the spatial layout and leaving behind pure artistic texture and style
     style_grams = {layer: get_gram_matrix(feat) for layer, feat in style_targets.items()}
 
     # ==========================================
@@ -178,7 +186,7 @@ def main():
         def closure():
             optimizer.zero_grad()
             
-            # Constrain target canvas pixels to valid visual bounds [-3.0, 3.0]
+            # Constrain target canvas pixels to valid visual bounds [-3.0, 3.0]. Clamping them keeps the image data within a valid range
             target_canvas.data.clamp_(-3.0, 3.0)
             
             # Extract current target features
@@ -224,7 +232,7 @@ def main():
     
     # Prepare and clamp pixel values to valid [0.0, 1.0] visual range
     content_display = content_img.detach().cpu().clamp(0, 1)
-    final_img = target_canvas.detach().cpu().clamp(0, 1)
+    # final_img = target_canvas.detach().cpu().clamp(0, 1)
     
     # Define distinct file paths
     orig_path = os.path.join(output_dir, "ns_original.png")
