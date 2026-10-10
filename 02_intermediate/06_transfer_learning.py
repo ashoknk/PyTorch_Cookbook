@@ -24,7 +24,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 # Point the Torch Home folder directly to your current working directory ('.')
-os.environ['TORCH_HOME'] = '.'
+os.environ['TORCH_HOME'] = './data/'
 
 # torchvision.models contains state-of-the-art vision models.
 # Documentation: https://torchvision.org/stable/models.html
