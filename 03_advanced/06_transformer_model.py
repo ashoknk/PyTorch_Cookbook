@@ -1,10 +1,75 @@
 """
 18. Transformer Architecture (From Scratch) in PyTorch
 
-This script implements the complete, original Encoder-Decoder Transformer model 
-from scratch. It structures all core mathematical modules, including 
-Scaled Dot-Product Attention, Multi-Head Attention blocks, Sinusoidal Positional 
-Encoding layers, and fully stacked Encoder/Decoder layers with residual LayerNorm pathways.
+1. What Are We Trying to Achieve Overall?
+   We are building an original, complete Transformer model (Encoder-Decoder) 
+   from scratch to perform Sequence-to-Sequence (Seq2Seq) tasks. 
+   Specifically, these scripts demonstrate translating text from a source language 
+   into a target language.
+
+2. A Simple Real-World Example: French to English Translation
+   - Input (Source Language - French): "j'aime les chats"
+   - The Encoder (06_transformer_model.py): Reads the entire French sentence, 
+     understands the context using Multi-Head Attention, and converts it into a 
+     meaningful mathematical representation.
+   - The Decoder (06_transformer_model.py): Takes that mathematical representation 
+     and generates the English translation word-by-word.
+   - Output (Target Language - English): "I like cats"
+
+3. Role of Each File:
+   - 06_transformer_model.py: Defines the core architecture components from scratch, 
+     including Positional Encoding, Multi-Head Attention, Encoder Layers, 
+     Decoder Layers, and the full Transformer class.
+   - 07_transformer_train.py: Imports the Transformer model, builds the causal 
+     look-ahead masks, sets up a toy French-to-English dataset, trains the model 
+     using CrossEntropyLoss, and executes greedy decoding to generate the final translated text.
+
+
+    1. PositionalEncoding:Injects sine/cosine wave position markers into embeddings so the 
+        model knows word order in parallel processing 
+
+    2. MultiHeadAttention: Computes Q, K, V attention matrices to dynamically highlight 
+        relationships between words across multiple representation heads 
+
+    3. EncoderLayer: Uses Self-Attention to encode the source sentence (French) into 
+        a deep contextual feature matrix (enc_out) 
+
+    4. DecoderLayer: Uses Masked Self-Attention on target tokens (English) and 
+        Cross-Attention on enc_out to align English target words with French source words 
+
+    5. Full Assembly Chain:
+        French Text -> PositionalEncoding -> EncoderLayers -> enc_out
+        English Text -> PositionalEncoding -> DecoderLayers (Cross-Attending to enc_out) -> FC -> Output Logits 
+        
+
+    [French Word Tokens] 
+        │
+        ▼
+    1.  src_embedding + PositionalEncoding 
+        │ (Adds word order awareness to French tokens)
+        ▼
+    2.  EncoderLayer(s) ──> MultiHeadAttention (Self-Attention)
+        │ (Every French word analyzes all other French words)
+        ▼
+    enc_out (Complete French Context Matrix) ─────────────────────┐
+                                                                  │
+    [English Word Tokens so far]                                  │
+        │                                                         │
+        ▼                                                         │
+    3.  trg_embedding + PositionalEncoding                        │
+        │ (Adds word order awareness to English tokens)           │
+        ▼                                                         │
+    4.  DecoderLayer(s)                                           │
+        │                                                         │
+        ├───> mha_self (Masked Self-Attention)                    │
+        │     (English tokens analyze past English tokens)        │
+        │                                                         │
+        └───> mha_cross (Cross-Attention) <───────────────────────┘
+                (Query = English, Key/Value = French enc_out)
+                ("What French words translate to the next English word?")
+        │
+        ▼
+    5.  self.fc_out (Linear Projection) ──> Predicts Next English Word Token Index
 
 Learning Objectives:
 1. Implement the mathematical formulation of Scaled Dot-Product Attention.
@@ -25,6 +90,14 @@ import torch.nn as nn
 # ==========================================
 # 1. SINUSOIDAL POSITIONAL ENCODING
 # ==========================================
+
+"""
+PositionalEncoding
+- What the Class Does:Unlike LSTMs or RNNs that process words step-by-step, a Transformer processes all words in a sentence simultaneously in parallel. Because of this, the Transformer has no inherent sense of word order. This class creates a static "map" of sine and cosine math waves that assign a unique position signature to every word slot.
+- What forward(x) Does: It takes the raw word embeddings x (shape: [Batch, Seq_Len, d_model]) and adds the positional wave patterns directly to them.
+- What Output It Gives: Vectors that contain both what the word means and where the word sits in the sentence.
+- How It Connects: Used in Transformer right after converting French and English word IDs into embedding vectors.
+"""
 class PositionalEncoding(nn.Module):
     def __init__(self, d_model, max_len=100):
         super(PositionalEncoding, self).__init__()
@@ -48,6 +121,27 @@ class PositionalEncoding(nn.Module):
 # ==========================================
 # 2. MULTI-HEAD ATTENTION MODULE
 # ==========================================
+"""
+- What the Class Does:
+  Acts as the main "thinking engine" of the Transformer. It splits word representations 
+  into three roles: Queries (what am I looking for?), Keys (what content is available?), 
+  and Values (what information do I pass along?). It divides these across multiple "heads" 
+  so the model can focus on different word connections simultaneously—for example, 
+  one head can connect the verb "runs" to its subject "dog", while another connects 
+  the adjective "brown" to the noun "dog".
+
+- What forward(q, k, v, mask) Does:
+  Compares every word in Query (Q) against every word in Key (K) to figure out which 
+  words are most relevant to each other. It turns those scores into percentages and 
+  uses them to blend the information in Value (V). If a mask is provided, it hides 
+  unwanted locations, such as blank padding tokens or future words in the sentence.
+
+- What Output It Gives:Returns an updated tensor of shape [Batch, Seq_Len, d_model] where every word vector 
+  now contains rich context from all the related words around it.
+
+- How It Connects: Serves as the foundational building block inside both the EncoderLayer (for understanding 
+  source text) and the DecoderLayer (for generating target text).
+"""
 class MultiHeadAttention(nn.Module):
     def __init__(self, d_model, num_heads):
         super(MultiHeadAttention, self).__init__()
@@ -88,6 +182,18 @@ class MultiHeadAttention(nn.Module):
 # ==========================================
 # 3. ENCODER AND DECODER BLOCKS
 # ==========================================
+
+"""
+EncoderLayer
+- What the Class Does:Acts as a single processing layer inside the French-reading Encoder stack. 
+    It combines MultiHeadAttention with a position-wise Feed-Forward Network (ffn) and Layer Normalization (layernorm).
+- What forward(x, mask) Does:
+- Runs x through MultiHeadAttention where Q, K, V are all x (Self-Attention). Every French word looks at every other French word to understand full sentence context.
+- Adds residual connections (x + attn_out) and applies Layer Normalization.
+- Passes through the Feed-Forward Network to refine features, followed by another Layer Normalization.
+- What Output It Gives: An updated, context-rich feature representation of the input French sentence.
+- How It Connects:Stacking multiple EncoderLayer blocks inside Transformer.encoder produces the final enc_out memory matrix that represents the complete meaning of the French text.
+"""
 class EncoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff=2048):
         super(EncoderLayer, self).__init__()
@@ -109,6 +215,19 @@ class EncoderLayer(nn.Module):
         x = self.layernorm2(x + ffn_out)
         return x
 
+"""
+DecoderLayer
+- What the Class Does:
+- Acts as a single processing layer inside the English-generating Decoder stack. It contains two MultiHeadAttention blocks: Masked Self-Attention (focuses on English words generated so far without looking ahead at future target words) and Cross-Attention (connects the generated English words to the French encoder features).
+- What forward(x, enc_output, src_mask, trg_mask) Does:
+- Self-Attention on Target: Runs x (English text) through mha_self with a causal trg_mask so current step cannot see future steps.
+- Cross-Attention: Runs mha_cross where Query comes from the English decoder state (x), but Key and Value come from the French encoder output (enc_output). This asks: "Based on the English words I've written so far, which French words should I focus on next?"
+- Passes through the Feed-Forward Network and Layer Normalization pathways.
+- What Output It Gives:
+- Refined decoder vectors that blend the English sequence history with focused French context.
+- How It Connects:
+- Stacking multiple DecoderLayer blocks inside Transformer.decoder outputs dec_out, which is projected by self.fc_out into vocabulary logits to predict the next English word.
+"""
 class DecoderLayer(nn.Module):
     def __init__(self, d_model, num_heads, d_ff=2048):
         super(DecoderLayer, self).__init__()
