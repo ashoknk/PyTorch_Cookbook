@@ -16,6 +16,7 @@ Learning Objectives:
 
 import os
 import ssl
+# Import ssl to prevent certificate verification errors on macOS model downloads
 ssl._create_default_https_context = ssl._create_unverified_context
 # Point the Torch Home folder directly to your current working directory ('.')
 os.environ['TORCH_HOME'] = './data/'
@@ -39,9 +40,6 @@ model_module = importlib.import_module("03_advanced.04_image_captioning_model")
 EncoderCNN = model_module.EncoderCNN
 DecoderRNN = model_module.DecoderRNN
 
-# Import ssl to prevent certificate verification errors on macOS model downloads
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
 
 def main():
     device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
