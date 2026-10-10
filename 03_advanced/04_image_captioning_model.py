@@ -25,6 +25,12 @@ Learning Objectives:
 3. Design a recurrent decoder merging text embeddings and visual context vectors.
 """
 
+import os
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+# Point the Torch Home folder directly to your current working directory ('.')
+os.environ['TORCH_HOME'] = './data/'
+
 # We import the core torch library.
 import torch
 

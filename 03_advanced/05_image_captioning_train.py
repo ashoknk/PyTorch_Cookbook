@@ -14,6 +14,12 @@ Learning Objectives:
 4. Verify gradient flows through both the Encoder and Decoder networks.
 """
 
+import os
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+# Point the Torch Home folder directly to your current working directory ('.')
+os.environ['TORCH_HOME'] = './data/'
+
 # We import the core torch library.
 import torch
 
