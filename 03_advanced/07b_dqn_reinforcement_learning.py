@@ -7,10 +7,11 @@ agent to solve classic control tasks (e.g., CartPole-v1) from the Gymnasium suit
 It covers Q-learning theory, experience replay buffers to break temporal transitions 
 correlation, and target networks to stabilize optimization updates.
 
-The main purpose of this code is to train a Deep Q-Network (DQN) AI agent to play the CartPole game without human intervention.
-Instead of writing hardcoded rules (e.g., "if pole leans right, move right"), the code gives the neural network complete control. 
-The network starts by making random guesses (exploring), records its experiences into memory, and gradually learns 
-which moves keep the pole balanced to achieve the highest score.   
+The main purpose of this code is to train a Deep Q-Network (DQN) AI agent to play 
+the CartPole game without human intervention.Instead of writing hardcoded rules 
+(e.g., "if pole leans right, move right"), the code gives the neural network complete control. 
+The network starts by making random guesses (exploring), records its experiences into memory, 
+and gradually learns which moves keep the pole balanced to achieve the highest score.   
 
 
 Learning Objectives:
@@ -72,7 +73,7 @@ class ReplayBuffer:
         transitions = random.sample(self.buffer, batch_size)
         
         # Unpack, convert to numpy, and then to PyTorch tensors
-        # NOTE: without numpy you will get a "TypeError: expected np.ndarray (got list)" error when creating torch tensors
+        # NOTE: without numpy you might see a "TypeError: expected np.ndarray (got list)" error when creating torch tensors
         states, actions, rewards, next_states, dones = zip(*transitions)
         return (
             torch.tensor(np.array(states), dtype=torch.float32),
@@ -93,12 +94,18 @@ def main():
     state_dim = env.observation_space.shape[0]
     action_dim = env.action_space.n
     print(f"Observation State Space size: {state_dim}, Action Space size: {action_dim}")
+    # print(f"Observation State Space : {env.observation_space}, Action Space : {env.action_space}")
 
     # Initialize Active and Target networks.
     # The target network provides static reference coordinates for temporal differences (TD) loss.
+    # policy_net (Active Network): 
+    #   This is the live network being trained on every batch. Its weights are updated at every optimization step.   
+    # target_net (Target Network): 
+    #   This acts as a frozen anchor. It stays completely still while policy_net learns, giving the agent a stable benchmark
     policy_net = QNetwork(state_dim, action_dim)
     target_net = QNetwork(state_dim, action_dim)
     # Align target weights initially. Copies all weights and biases from policy_net directly into target_net.
+    # As policy_net learns, its weights change at every step, but target_net stays frozen.
     target_net.load_state_dict(policy_net.state_dict())
     
     optimizer = optim.Adam(policy_net.parameters(), lr=0.001)
@@ -129,11 +136,13 @@ def main():
             
             # 3.1 Epsilon-Greedy Action Selection
             # random.random() produces a decimal between 0.0 and 1.0
+            # The agent picks a completely random move
             if random.random() < epsilon:
                 # Explore: choose a random action
                 action = env.action_space.sample()
             else: 
-                # (Exploitation) uses the Neural Network's best calculated guess. The AI will consult its trained policy_net neural network to choose the smartest move.
+                # (Exploitation) uses the Neural Network's best calculated guess. 
+                # The AI will consult its trained policy_net neural network to choose the smartest move.
                 # Calculate the model's smartest decision based on its current trained weights.
                 with torch.no_grad():
                     state_t = torch.tensor(state, dtype=torch.float32).unsqueeze(0)
@@ -149,8 +158,9 @@ def main():
             state = next_state
 
             # 3.2 Optimization Step
-            # Checks if there are enough saved game steps inside the ReplayBuffer to fill a full mini-batch (e.g., 64 past steps).
-            # For the first few steps of Episode 1, the buffer is empty. The code skips training until at least 64 experiences are saved
+            # Checks if there are enough saved game steps inside the ReplayBuffer to fill a mini-batch 
+            # (e.g., 64 past steps). For the first few steps of Ep 1, the buffer is empty.
+            # The code skips training until at least 64 experiences are saved
             if len(replay_buffer) >= batch_size:
                 # Retrieve random mini-batches from memory
                 b_states, b_actions, b_rewards, b_next_states, b_dones = replay_buffer.sample(batch_size)
@@ -158,7 +168,8 @@ def main():
                 # Predict current action Q-values: Q(s, a)
                 # gather() is a method of torch.Tensor (a PyTorch Tensor object).
                 #Documentation: https://pytorch.org/docs/stable/generated/torch.Tensor.gather.html
-                # gather(1, b_actions) uses b_actions as index markers to select and extract only the Q-value corresponding to the specific action chosen for each sample in the batch.
+                # gather(1, b_actions) uses b_actions as index markers to select and 
+                # extract only the Q-value corresponding to the specific action chosen for each sample in the batch.
                 current_q = policy_net(b_states).gather(1, b_actions)
                 
                 # Predict maximum subsequent action values using target network: max Q_target(s', a')

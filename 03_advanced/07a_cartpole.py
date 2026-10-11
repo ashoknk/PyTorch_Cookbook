@@ -1,57 +1,94 @@
 """
 CARTPOLE-v1 RL ENVIRONMENT AND TRAINING PARAMETERS:
 
-- Observation State Space Size (4):
-  The AI receives 4 numerical values describing the physical state at each step:
-  [Cart Position, Cart Velocity, Pole Angle, Pole Angular Velocity].
+Gymnasium is an open-source Python library that provides a standardized API 
+for developing, testing, and benchmarking single-agent reinforcement learning (RL) algorithms.
+Gymnasium standardizes how an AI agent interacts with a virtual environment by providing 
+a rigid structure for four essential concepts:
 
-- Action Space Size (2):
-  The discrete choices available to the agent at each timestep:
-  - 0: Push cart left
-  - 1: Push cart right
+  - Observation State Space Size (4):
+    The AI receives 4 numerical values describing the physical state at each step:
+    [Cart Position, Cart Velocity, Pole Angle, Pole Angular Velocity].
 
-- Score (Episode Reward):
-  The total number of consecutive timesteps the pole remained balanced upright 
-  before falling or hitting terminal limits. Higher values indicate better performance.
+  - Action Space Size (2):
+    The discrete choices available to the agent at each timestep:
+    - 0: Push cart left
+    - 1: Push cart right
 
-- Exploration Epsilon:
-  The threshold probability governing the Epsilon-Greedy strategy (Exploration vs. Exploitation).
-  As it decays over time (e.g., from 1.0 down to lower values), the agent shifts from 
-  taking random exploratory actions to relying on its neural network's learned policy.
+  - Score (Episode Reward):
+    The total number of consecutive timesteps the pole remained balanced upright 
+    before falling or hitting terminal limits. Higher values indicate better performance.
+
+  - Exploration Epsilon:
+    The threshold probability governing the Epsilon-Greedy strategy (Exploration vs. Exploitation).
+    As it decays over time (e.g., from 1.0 down to lower values), the agent shifts from 
+    taking random exploratory actions to relying on its neural network's learned policy.
 """
 
 import gymnasium as gym
 
 # 1. Create the environment (headless mode - no visual window)
 env = gym.make("CartPole-v1")
-
+state_dim = env.observation_space.shape[0]
+action_dim = env.action_space.n
+print(f"Observation State Space size: {state_dim}, Action Space size: {action_dim}")
+    
 # 2. Reset the environment to start a new episode
-observation, info = env.reset()
+observation, _ = env.reset()
+cart_pos, cart_vel, pole_angle, pole_vel = observation
+pole_angle_degrees = pole_angle * 180 / 3.14159  # Convert radians to degrees
+print(f"Initial Observation: - Cart Pos: {cart_pos:.3f}m, Cart Vel: {cart_vel:.3f}m/s")
+print(f"             Pole Angle: {pole_angle:.3f}rad ({pole_angle_degrees:.1f}°), Pole Vel: {pole_vel:.3f}rad/s")
+        
 
-print(f"Initial Observation: {observation}")
+print("\n")
+# 3. Create action label dictionary for readable output
+action_labels = {0: "push left", 1: "push right"}
+episode_reward = 0
 
-# 3. Run a simple loop for 100 timesteps
+# 4. Run a simple loop for 100 timesteps
 for step in range(100):
     # Select a random action from the action space (0 = push left, 1 = push right)
     action = env.action_space.sample()
 
     # Apply the action to the environment
-    observation, reward, terminated, truncated, info = env.step(action)
+    observation, reward, terminated, truncated, _ = env.step(action)
+    episode_reward += reward
 
-    print(f"Step {step + 1} | Action: {action} | Reward: {reward}")
+    if(step % 10 == 0):
+      action_label = action_labels[action]
+      print(f"Step {step + 1} | Action: {action_label} | Reward: {episode_reward}")
 
-    # If the pole falls over (terminated) or hits the time limit (truncated), reset    
+    # If the pole falls over (terminated) or hits the time limit (truncated), reset
     # The episode terminates when the pole becomes unstable:
     # 1.Pole angle exceeds ±12 degrees from vertical
     # 2.Cart position exceeds ±2.4 units from center
 
     if terminated or truncated:
-        print("Episode finished. Resetting environment..." + str(observation))
+        action_label = action_labels[action]
+        # Show both the actual reward and what a penalty-based system might show
+        penalty_reward = -1.0 if terminated else 0.0  # Custom penalty for falling
+        print(f"FINAL Step {step + 1} | Action: {action_label} | Actual Reward: {reward} | Custom Penalty: {penalty_reward}")
+
+        # Decode the observation values for better understanding
+        cart_pos, cart_vel, pole_angle, pole_vel = observation
+        pole_angle_degrees = pole_angle * 180 / 3.14159  # Convert radians to degrees
+
+        print(f"\tFinal State - Cart Pos: {cart_pos:.3f}m, Cart Vel: {cart_vel:.3f}m/s")
+        print(f"             Pole Angle: {pole_angle:.3f}rad ({pole_angle_degrees:.1f}°), Pole Vel: {pole_vel:.3f}rad/s")
+        print(f"\tRaw observation: {observation}")
+        
+
         if terminated:
-            print("Pole fell over.")
+            if abs(pole_angle_degrees) > 12:
+                print(f"\tPole fell over - Angle {pole_angle_degrees:.1f}° exceeded ±12° limit!")
+            elif abs(cart_pos) > 2.4:
+                print(f"\tCart went too far - Position {cart_pos:.3f}m exceeded ±2.4m limit!")
         elif truncated:
-            print("Time limit reached.")
-        observation, info = env.reset()
+            print("\tTime limit reached.")
+        observation, _ = env.reset()
+        print("\n")
+
 
 # 4. Clean up and close the window
 env.close()
