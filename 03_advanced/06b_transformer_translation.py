@@ -471,6 +471,8 @@ def main():
 
         if (epoch + 1) % 20 == 0:
             print(f"Epoch [{epoch+1}/{num_epochs}], Average Loss: {avg_loss:.4f}")
+    
+    
 
     # ==========================================
     # 7. EVALUATION AND TRANSLATION EXAMPLES
