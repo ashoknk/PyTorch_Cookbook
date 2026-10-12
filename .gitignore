@@ -10,6 +10,7 @@ data/FashionMNIST
 data/MNIST
 data/cifar-10-batches-py
 data/hub/*
+data/tensorboard*.png
 
 runs/*
 

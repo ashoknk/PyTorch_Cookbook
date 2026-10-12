@@ -123,45 +123,92 @@ def main():
     writer.close()
     print("SummaryWriter flushed and closed.")
 
-    """
+"""
     To launch the interactive dashboard and view your graphs, open a separate terminal inside your project directory and run:
-        tensorboard --logdir=runs
-    Then, open your web browser and navigate to:
-        http://localhost:6006
-    Inside the TensorBoard web UI, you will see interactive tabs for Scalars (loss curves), 
-    Images (sample grids), Graphs (network structure), and Histograms  
+            tensorboard --logdir=runs
+        Then, open your web browser and navigate to:
+            http://localhost:6006
+        Inside the TensorBoard web UI, you will see interactive tabs for Scalars (loss curves), 
+        Images (sample grids), Graphs (network structure), and Histograms  
 
-    TENSORBOARD DASHBOARD INTERPRETATION GUIDE
+    ===============================================================================
+    PART 1: THE RECOMMENDED VISUALIZATION FLOW (Images -> Graphs -> Scalars)
+    ===============================================================================
 
-    1. LOSS METRICS (Model Error)
-        - What it is: Measures prediction errors (Loss/train_step vs Loss/train_epoch)
-        - Why look at it: Track learning progress; curves must trend downward over time
-        - What You Want to See: Smooth downward sloping curves across steps and epochs
-        - Typical Target Values: Starts around ~1.3+ and steadily drops toward ~0.8 or lower.
+    1. IMAGES TAB
+    - Core Function: writer.add_image("sample_images", img_grid)
+    - What It Shows: Visual grid preview of input dataset batches (e.g., FashionMNIST items).
+    - Why We Need It: Data Pipeline Verification. Confirms that images are loading, 
+        normalizing, and reshaping correctly before feeding them to the neural network.
 
-    2. PARAMETERS (Stored Weights)
-        - What it is: Distribution of weights/biases in conv and fc layers
-        - Why look at it: Verifies model learning; flat/static distributions mean frozen weights
-        - What You Want to See: Distributions widening and shifting across epochs as features learn
-        - Typical Target Values: Values well-distributed around non-zero ranges (e.g., -0.2 to +0.2).
+    2. GRAPHS TAB (Architecture & Data Flow)
+    - Core Function: writer.add_graph(model, dummy_input)
+    - What It Shows: Interactive architectural flowchart of the model's layers (Conv2d, ReLU, Linear).
+    - Why We Need It: Verifies tensor shape transformations between 
+        layers and confirms the network topology matches your intended design.Debugs dimension mismatches, layer connectivity issues, and tensor 
+        broadcasting errors during model design.
 
-    3. GRADIENTS (Update Speed & Health)
-        - What it is: Backprop adjustment values for model parameters
-        - Why look at it: Detects vanishing (zero) or exploding (massive) gradient errors
-        - What You Want to See: Small, active, non-zero gradient values (avoiding zero or spikes)
-        - Typical Target Values: Stable backprop ranges centered near zero (e.g., -0.02 to +0.02).
+    3. SCALARS TAB (Performance & Error)
+    - Core Function: writer.add_scalar("Loss/train", loss.item(), global_step)
+    - What It Shows: 2D line plots tracking scalar metrics (like training/validation loss over steps/epochs).
+    - Why We Need It: Performance Tracking. Directly answers whether the model is learning 
+        by displaying downward-trending loss curves over time. Detects underfitting, overfitting, or improper learning rate settings 
+        by monitoring optimization convergence.
 
-    4. IMAGE SAMPLES (Data Pipeline Check)
-        - What it is: Visual sample grid of input dataset batches
-        - Why look at it: Confirms images load, normalize, and format correctly before training
-        - What You Want to See: Clear, recognizable clothing items after dataset transforms
-        - Typical Target Values: Normalized pixel intensities properly scaled in the [0.0, 1.0] visual range.
+    4. HISTOGRAMS TAB (Parameter Weights & Gradients)
+   - Core Function: writer.add_histogram("Parameters/...", param, epoch)
+   - What It Shows: 3D density curves of layer weights, biases, and backprop gradients across epochs.
+   - Why We Need It: Health Diagnostic. Detects exploding/vanishing gradients and verifies 
+     that layer parameters are actively adjusting rather than remaining frozen or dead.
 
-    """ 
+     
+    DIFFERENCE BETWEEN PARAMETERS AND GRADIENTS IN TENSORBOARD HISTOGRAMS
 
+    1. CORE DIFFERENCE IN SIMPLE WORDS:
+    - Parameters (Weights & Biases): The model's "Memory".
+        These are the stored numbers that define what the neural network knows. 
+        They persist between steps and change gradually as the model learns.
+    - Gradients: The model's "Direction Hints".
+        These are temporary calculated values produced during backpropagation (loss.backward()). 
+        They tell PyTorch how much and in which direction to adjust each parameter.
+
+    2. WHAT TO LOOK FOR IN GRADIENTS:
+    - What it shows: The size of updates being pushed back through the layers during backprop.
+    - What you WANT to see: Small, active, non-zero values centered near 0 (e.g., -0.02 to +0.02).
+    - Red Flags to spot:
+        * Vanishing Gradients: The histogram shrinks into a flat spike at exactly 0. 
+        (Means early layers stopped learning).
+        * Exploding Gradients: The histogram spreads wildly into huge numbers (-100, +100) or NaN. 
+        (Means training will crash).
+
+    3. WHAT TO LOOK FOR IN PARAMETERS:
+    - What it shows: The distribution of actual weight and bias values stored in the network.
+    - What you WANT to see: Smooth bell curves that gradually widen and shift across epochs.
+    - Red Flags to spot:
+        * Frozen Weights: The curve looks completely static/unchanged across epochs. 
+        (Means the layer is not receiving updates).
+        * Dead Neurons: All weights collapse to 0 or stuck at constant values.
+
+    4. CONV (Convolutional) VS. FC (Fully Connected) - WEIGHTS VS. BIASES:
+    - Conv Weights: Detect visual patterns (edges, textures, shapes). 
+        Look for smooth, active weight distributions as filters learn features.
+    - Conv Biases: Baseline offsets for feature detectors. 
+        Usually small numbers that gently adjust activation thresholds.
+    - FC (Linear) Weights: Connect features to final class predictions (e.g., shirt, shoe). 
+        Because FC layers have many parameters, monitor them closely for exploding values.
+    - FC Biases: Baseline offsets for each final output class category. 
+        Help the model adjust overall confidence balance across classes.
+
+    NOTE: Conv Weights in SimpleCNN: You only have 72 total conv weights (1 in-channel * 8 out-channels * 3x3 kernel). 
+       With only 72 numbers, there aren't enough data points to form a smooth bell curve! 
+       Instead, you will see a blocky, spiky, or flat distribution.
+     * Biases: Conv bias only has 8 total numbers (1 per channel), and FC bias only has 10 total numbers (1 per class). 
+       You cannot make a bell curve out of 8 or 10 numbers.
+    """
+    
     # Clean up runs directory
-    shutil.rmtree("./runs")
-    print("\n--- Cleaned up './runs' logging directory ---")
+    # shutil.rmtree("./runs")
+    # print("\n--- Cleaned up './runs' logging directory ---")
 
 # ==========================================
     # 4. SAVE VISUAL GRAPHS AND IMAGES TO DISK

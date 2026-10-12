@@ -10,16 +10,16 @@ rather than keeping it fixed at the same number the entire time.
      (e.g., cuts speed by half every 10 epochs).
    - Best Used When: You want simple, predictable, scheduled drops at fixed intervals.
 
-2. ReduceLROnPlateau
-   - How It Adjusts Speed: Monitors validation loss. If loss stops improving for a 
-     few epochs, it automatically reduces speed.
-   - Best Used When: You want the model to slow down only when it actually gets stuck.
-
-3. CosineAnnealingLR
+2. CosineAnnealingLR
    - How It Adjusts Speed: Smoothly lowers (and optionally raises) speed following 
      a soft cosine wave curve.
    - Best Used When: You are training modern deep networks (like CNNs or Transformers) 
      for maximum accuracy.
+
+3. ReduceLROnPlateau
+   - How It Adjusts Speed: Monitors validation loss. If loss stops improving for a 
+     few epochs, it automatically reduces speed.
+   - Best Used When: You want the model to slow down only when it actually gets stuck.
 
 This script demonstrates how to dynamically adjust learning rates during training 
 to optimize model convergence. It covers standard PyTorch scheduler classes—including 
@@ -65,7 +65,7 @@ def compare_schedulers():
     # 1.2 CosineAnnealingLR: Gradually decays LR in a cosine-wave shape down to 'eta_min'.
     # Highly popular for state-of-the-art vision models.
     #   T_max=30: Smoothly reduces LR over a 30-epoch cycle.
-    #             Tells the scheduler how long it should take to smoothly lower the learning rate
+    #             Tells the scheduler how long it should take to smoothly lower the LR.
     #   eta_min=0.001: 
     #             Sets a floor so LR drops to 0.001 instead of stopping at 0.0
     # Documentation: https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
@@ -73,6 +73,11 @@ def compare_schedulers():
 
     # 1.3 ReduceLROnPlateau: Decays learning rate when a monitored validation metric (like validation loss)
     # stops improving for a specified 'patience' window of epochs.
+    # Hyperparameter Breakdown for ReduceLROnPlateau:
+    # - mode='min': Monitors if loss stops DECREASING (use 'max' if monitoring accuracy to see if it stops INCREASING).
+    # - factor=0.1: The multiplier used to reduce LR. New LR = Current LR * 0.1 (drops LR by 90%, e.g., 0.01 -> 0.001).
+    # - patience=5: The counter waits for 5 consecutive epochs without improvement before factor=0.1 jumps in to cut the learning rate.
+    # scheduler_plateau = lr_scheduler.ReduceLROnPlateau(opt3, mode='min', factor=0.1, patience=5)
     # Documentation: https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.ReduceLROnPlateau.html
     scheduler_plateau = lr_scheduler.ReduceLROnPlateau(opt3, mode='min', factor=0.1, patience=5)
 
@@ -93,6 +98,8 @@ def compare_schedulers():
         Appends 0.55 fifteen times in a row for epochs 15-29: 0.55, 0.55, 0.55, ...
     """
     simulated_losses = [1.0 - (0.03 * i) for i in range(15)] + [0.55 for _ in range(15)]
+    formatted = [f"{x:.2f}" for x in simulated_losses]
+    print(f"simulated_losses: {formatted}")
 
     for epoch in range(30):
         # 2.1 Track current learning rates from optimizer parameter groups
@@ -108,7 +115,7 @@ def compare_schedulers():
         # 2.2 Advance Schedulers
         # StepLR and CosineAnnealingLR are stepped at the end of every epoch.
         scheduler_step.step()
-        scheduler_cosine.step()
+        scheduler_cosine.step() #smoothly decreases the learning rate following a mathematical cosine wave across a pre-set total number of epochs
         
         # ReduceLROnPlateau requires the monitored validation metric passed to step().
         current_loss = simulated_losses[epoch]
@@ -125,6 +132,7 @@ def compare_schedulers():
     print(f"  Epoch 30 Rates:         StepLR = {step_lrs[29]:.4f} | Cosine = {cosine_lrs[29]:.4f} | Plateau = {plateau_lrs[29]:.4f}")
 
     # Assertions to confirm correctness (rounded to 4 decimal places to prevent float-point representation mismatches)
+    # simulation loop runs for 30 epochs (indexed from 0 to 29)
     assert round(step_lrs[29], 4) == 0.0250, "StepLR decay value mismatch."
     assert round(plateau_lrs[29], 4) == 0.0010, "ReduceLROnPlateau decay value mismatch (expected 2 decays, final rate = 0.0010)."
     print("\nDynamic learning rate transitions verified successfully!")
