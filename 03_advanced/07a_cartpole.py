@@ -1,5 +1,5 @@
 """
-CARTPOLE-v1 RL ENVIRONMENT AND TRAINING PARAMETERS:
+ 18 - 07a. CARTPOLE-v1 RL ENVIRONMENT AND TRAINING PARAMETERS:
 
 Gymnasium is an open-source Python library that provides a standardized API 
 for developing, testing, and benchmarking single-agent reinforcement learning (RL) algorithms.
@@ -18,17 +18,13 @@ a rigid structure for four essential concepts:
   - Score (Episode Reward):
     The total number of consecutive timesteps the pole remained balanced upright 
     before falling or hitting terminal limits. Higher values indicate better performance.
-
-  - Exploration Epsilon:
-    The threshold probability governing the Epsilon-Greedy strategy (Exploration vs. Exploitation).
-    As it decays over time (e.g., from 1.0 down to lower values), the agent shifts from 
-    taking random exploratory actions to relying on its neural network's learned policy.
 """
 
 import torch
 import gymnasium as gym
 
 # 1. Create the environment (headless mode - no visual window)
+#Documentation: https://gymnasium.farama.org/environments/classic_control/cartpole/
 env = gym.make("CartPole-v1")
 state_dim = env.observation_space.shape[0]
 action_dim = env.action_space.n
@@ -94,7 +90,6 @@ for step in range(100):
 # 4. Clean up and close the window
 env.close()
 
-
 # ================gather======
 """
 torch.Tensor.gather() is an advanced multi-index selection tool used to collect or slice out 
@@ -108,6 +103,7 @@ source = torch.tensor([
     [40, 50, 60]])
 
 # =====1. Gathering along columns (dim=1) =====
+print("\n=========1. Gathering along columns (dim=1)===========\n")
 # We want to pick elements from each row by their column indices.
 # Row 0: pick index 0 (10) and index 2 (30)
 # Row 1: pick index 1 (50) and index 1 (50)
@@ -121,6 +117,7 @@ print(out1)
 #                [50, 50]])
 
 # ===== 2. Gathering along rows (dim=0) =====
+print("\n=========2. Gathering along rows (dim=0)===========\n")
 # We want to pick elements from each column by their row indices.
 # Column 0: pick row 0 (10)
 # Column 1: pick row 1 (50)

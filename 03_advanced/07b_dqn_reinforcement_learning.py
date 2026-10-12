@@ -1,5 +1,5 @@
 """
-20. Deep Q-Network (DQN) Reinforcement Learning in PyTorch
+ 18 - 07b. Deep Q-Network (DQN) Reinforcement Learning in PyTorch
 
 The `QNetwork` is a neural network that takes the current game state as input and outputs estimated future 
 reward scores (Q-values) for every possible move. It acts as the agent's brain, allowing it to choose 
@@ -14,7 +14,7 @@ What is a Q-Value?
     get if it takes a specific action right now and keeps playing smartly afterward.
 
 The main purpose of this code is to train a Deep Q-Network (DQN) AI agent to play 
-the CartPole game without human intervention.Instead of writing hardcoded rules 
+the CartPole game without human intervention. Instead of writing hardcoded rules 
 (e.g., "if pole leans right, move right"), the code gives the neural network complete control. 
 The network starts by making random guesses (exploring), records its experiences into memory, 
 and gradually learns which moves keep the pole balanced to achieve the highest score.   

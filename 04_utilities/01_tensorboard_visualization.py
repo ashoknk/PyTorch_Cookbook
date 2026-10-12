@@ -16,10 +16,7 @@ Learning Objectives:
 
 import shutil
 
-# We import the core torch library.
 import torch
-
-# nn contains neural network model layers.
 import torch.nn as nn
 
 # SummaryWriter is the primary class for streaming logs to TensorBoard.
@@ -29,6 +26,8 @@ from torch.utils.tensorboard import SummaryWriter
 # torchvision contains pre-downloaded FashionMNIST dataset and visual helpers.
 import torchvision
 import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import numpy as np
 
 # Simple toy classifier for logging demonstration
 class SimpleCNN(nn.Module):
@@ -123,101 +122,32 @@ def main():
     writer.close()
     print("SummaryWriter flushed and closed.")
 
-"""
-    To launch the interactive dashboard and view your graphs, open a separate terminal inside your project directory and run:
-            tensorboard --logdir=runs
-        Then, open your web browser and navigate to:
-            http://localhost:6006
-        Inside the TensorBoard web UI, you will see interactive tabs for Scalars (loss curves), 
-        Images (sample grids), Graphs (network structure), and Histograms  
+    # To launch the interactive dashboard and view your graphs, open a separate terminal
+    # inside your project directory and run:
+    #     tensorboard --logdir=runs
+    # Then, open your web browser and navigate to:
+    #     http://localhost:6006
+    # Inside the TensorBoard web UI, you will see interactive tabs for Scalars,
+    # Images, Graphs, and Histograms.
+    #
+    # ==========================================
+    # PART 1: THE RECOMMENDED VISUALIZATION FLOW
+    # ==========================================
+    #
+    # 1. Images tab: sample image grids confirm data loading and normalization.
+    # 2. Graphs tab: add_graph() reveals the model architecture and tensor flow.
+    # 3. Scalars tab: loss curves show whether training is improving.
+    # 4. Histograms tab: weight and gradient distributions expose learning issues.
 
-    ===============================================================================
-    PART 1: THE RECOMMENDED VISUALIZATION FLOW (Images -> Graphs -> Scalars)
-    ===============================================================================
-
-    1. IMAGES TAB
-    - Core Function: writer.add_image("sample_images", img_grid)
-    - What It Shows: Visual grid preview of input dataset batches (e.g., FashionMNIST items).
-    - Why We Need It: Data Pipeline Verification. Confirms that images are loading, 
-        normalizing, and reshaping correctly before feeding them to the neural network.
-
-    2. GRAPHS TAB (Architecture & Data Flow)
-    - Core Function: writer.add_graph(model, dummy_input)
-    - What It Shows: Interactive architectural flowchart of the model's layers (Conv2d, ReLU, Linear).
-    - Why We Need It: Verifies tensor shape transformations between 
-        layers and confirms the network topology matches your intended design.Debugs dimension mismatches, layer connectivity issues, and tensor 
-        broadcasting errors during model design.
-
-    3. SCALARS TAB (Performance & Error)
-    - Core Function: writer.add_scalar("Loss/train", loss.item(), global_step)
-    - What It Shows: 2D line plots tracking scalar metrics (like training/validation loss over steps/epochs).
-    - Why We Need It: Performance Tracking. Directly answers whether the model is learning 
-        by displaying downward-trending loss curves over time. Detects underfitting, overfitting, or improper learning rate settings 
-        by monitoring optimization convergence.
-
-    4. HISTOGRAMS TAB (Parameter Weights & Gradients)
-   - Core Function: writer.add_histogram("Parameters/...", param, epoch)
-   - What It Shows: 3D density curves of layer weights, biases, and backprop gradients across epochs.
-   - Why We Need It: Health Diagnostic. Detects exploding/vanishing gradients and verifies 
-     that layer parameters are actively adjusting rather than remaining frozen or dead.
-
-     
-    DIFFERENCE BETWEEN PARAMETERS AND GRADIENTS IN TENSORBOARD HISTOGRAMS
-
-    1. CORE DIFFERENCE IN SIMPLE WORDS:
-    - Parameters (Weights & Biases): The model's "Memory".
-        These are the stored numbers that define what the neural network knows. 
-        They persist between steps and change gradually as the model learns.
-    - Gradients: The model's "Direction Hints".
-        These are temporary calculated values produced during backpropagation (loss.backward()). 
-        They tell PyTorch how much and in which direction to adjust each parameter.
-
-    2. WHAT TO LOOK FOR IN GRADIENTS:
-    - What it shows: The size of updates being pushed back through the layers during backprop.
-    - What you WANT to see: Small, active, non-zero values centered near 0 (e.g., -0.02 to +0.02).
-    - Red Flags to spot:
-        * Vanishing Gradients: The histogram shrinks into a flat spike at exactly 0. 
-        (Means early layers stopped learning).
-        * Exploding Gradients: The histogram spreads wildly into huge numbers (-100, +100) or NaN. 
-        (Means training will crash).
-
-    3. WHAT TO LOOK FOR IN PARAMETERS:
-    - What it shows: The distribution of actual weight and bias values stored in the network.
-    - What you WANT to see: Smooth bell curves that gradually widen and shift across epochs.
-    - Red Flags to spot:
-        * Frozen Weights: The curve looks completely static/unchanged across epochs. 
-        (Means the layer is not receiving updates).
-        * Dead Neurons: All weights collapse to 0 or stuck at constant values.
-
-    4. CONV (Convolutional) VS. FC (Fully Connected) - WEIGHTS VS. BIASES:
-    - Conv Weights: Detect visual patterns (edges, textures, shapes). 
-        Look for smooth, active weight distributions as filters learn features.
-    - Conv Biases: Baseline offsets for feature detectors. 
-        Usually small numbers that gently adjust activation thresholds.
-    - FC (Linear) Weights: Connect features to final class predictions (e.g., shirt, shoe). 
-        Because FC layers have many parameters, monitor them closely for exploding values.
-    - FC Biases: Baseline offsets for each final output class category. 
-        Help the model adjust overall confidence balance across classes.
-
-    NOTE: Conv Weights in SimpleCNN: You only have 72 total conv weights (1 in-channel * 8 out-channels * 3x3 kernel). 
-       With only 72 numbers, there aren't enough data points to form a smooth bell curve! 
-       Instead, you will see a blocky, spiky, or flat distribution.
-     * Biases: Conv bias only has 8 total numbers (1 per channel), and FC bias only has 10 total numbers (1 per class). 
-       You cannot make a bell curve out of 8 or 10 numbers.
-    """
-    
     # Clean up runs directory
     # shutil.rmtree("./runs")
     # print("\n--- Cleaned up './runs' logging directory ---")
 
-# ==========================================
+    # ==========================================
     # 4. SAVE VISUAL GRAPHS AND IMAGES TO DISK
     # ==========================================
-    import matplotlib.pyplot as plt
-    import numpy as np
-
     print("\n--- Saving Visual Graphs and Image Outputs to Disk ---")
-    
+
     # 1. Save the Sample Image Grid as a PNG file
     # De-normalize images from [-1, 1] back to [0, 1] range for viewing
     grid_np = img_grid.cpu().numpy() / 2 + 0.5
@@ -239,7 +169,8 @@ def main():
     plt.legend()
     plt.savefig("./data/tensorboard_loss_chart.png", bbox_inches='tight')
     plt.close()
-    print("Saved training loss chart to './data/tensorboard_loss_chart.png'")    
+    print("Saved training loss chart to './data/tensorboard_loss_chart.png'")
+
 
 if __name__ == "__main__":
     main()
