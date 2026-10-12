@@ -143,34 +143,6 @@ def main():
     # shutil.rmtree("./runs")
     # print("\n--- Cleaned up './runs' logging directory ---")
 
-    # ==========================================
-    # 4. SAVE VISUAL GRAPHS AND IMAGES TO DISK
-    # ==========================================
-    print("\n--- Saving Visual Graphs and Image Outputs to Disk ---")
-
-    # 1. Save the Sample Image Grid as a PNG file
-    # De-normalize images from [-1, 1] back to [0, 1] range for viewing
-    grid_np = img_grid.cpu().numpy() / 2 + 0.5
-    plt.figure(figsize=(10, 4))
-    plt.imshow(np.transpose(grid_np, (1, 2, 0)))
-    plt.title("FashionMNIST Sample Image Grid")
-    plt.axis("off")
-    plt.savefig("./data/tensorboard_sample_grid.png", bbox_inches='tight')
-    plt.close()
-    print("Saved image grid preview to './data/tensorboard_sample_grid.png'")
-
-    # 2. Save a Training Loss Plot as a PNG file
-    plt.figure(figsize=(8, 4))
-    plt.plot(range(1, epochs + 1), [running_loss / 30 for _ in range(epochs)], marker='o', color='blue', label='Epoch Loss')
-    plt.title("Training Loss Over Epochs")
-    plt.xlabel("Epoch")
-    plt.ylabel("Loss")
-    plt.grid(True)
-    plt.legend()
-    plt.savefig("./data/tensorboard_loss_chart.png", bbox_inches='tight')
-    plt.close()
-    print("Saved training loss chart to './data/tensorboard_loss_chart.png'")
-
 
 if __name__ == "__main__":
     main()
