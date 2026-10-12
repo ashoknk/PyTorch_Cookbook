@@ -25,6 +25,7 @@ a rigid structure for four essential concepts:
     taking random exploratory actions to relying on its neural network's learned policy.
 """
 
+import torch
 import gymnasium as gym
 
 # 1. Create the environment (headless mode - no visual window)
@@ -92,3 +93,40 @@ for step in range(100):
 
 # 4. Clean up and close the window
 env.close()
+
+
+# ================gather======
+"""
+torch.Tensor.gather() is an advanced multi-index selection tool used to collect or slice out 
+specific values from a source tensor along a specified dimension using an index tensor.
+Documentation: https://pytorch.org/docs/stable/generated/torch.Tensor.gather.html
+"""
+
+# Create a 2x3 source tensor
+source = torch.tensor([
+    [10, 20, 30],
+    [40, 50, 60]])
+
+# =====1. Gathering along columns (dim=1) =====
+# We want to pick elements from each row by their column indices.
+# Row 0: pick index 0 (10) and index 2 (30)
+# Row 1: pick index 1 (50) and index 1 (50)
+index_dim1 = torch.tensor([
+    [0, 2],
+    [1, 1]])
+
+out1 = source.gather(dim=1, index=index_dim1)
+print(out1)
+# Output: tensor([[10, 30],
+#                [50, 50]])
+
+# ===== 2. Gathering along rows (dim=0) =====
+# We want to pick elements from each column by their row indices.
+# Column 0: pick row 0 (10)
+# Column 1: pick row 1 (50)
+# Column 2: pick row 0 (30)
+index_dim0 = torch.tensor([[0, 1, 0]])
+
+out0 = source.gather(dim=0, index=index_dim0)
+print(out0)
+# Output: tensor([[10, 50, 30]])
