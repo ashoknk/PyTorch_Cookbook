@@ -146,3 +146,38 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+"""===
+
+1. IMAGES TAB
+   - Core Function: writer.add_image("sample_images", img_grid)
+   - What It Shows: Visual grid preview of input dataset batches (e.g., FashionMNIST items).
+   - Why We Need It: Data Pipeline Verification. Confirms that images are loading, 
+     normalizing, and reshaping correctly before feeding them to the neural network.
+
+2. GRAPHS TAB
+   - What It Shows: Interactive architectural flowchart of the model's layers (Conv2d, ReLU, Linear).
+   - Core Function: writer.add_graph(model, dummy_input)Serializes PyTorch's computational execution graph.
+   - Why We Need It: Structural Inspection. Verifies tensor shape transformations between 
+     layers and confirms the network topology matches your intended design.
+     Debugs dimension mismatches, layer connectivity issues, and tensor 
+     broadcasting errors during model design.
+
+3. SCALARS TAB
+   - Core Function: writer.add_scalar("Loss/train", loss.item(), global_step)
+   Tracks floating-point numbers over step intervals.
+   - What It Shows: 2D line plots tracking scalar metrics (like training/validation loss over steps/epochs).
+   - Why We Need It: Performance Tracking. Directly answers whether the model is learning 
+     by displaying downward-trending loss curves over time.
+    Detects underfitting, overfitting, or improper learning rate settings 
+     by monitoring optimization convergence.
+
+
+4. HISTOGRAMS TAB (Parameter Weights & Gradients)
+   - Core Function: writer.add_histogram("Parameters/...", param, epoch)
+   - What It Shows: 3D density curves of layer weights, biases, and backprop gradients across epochs.
+   - Why We Need It: Health Diagnostic. Detects exploding/vanishing gradients and verifies 
+     that layer parameters are actively adjusting rather than remaining frozen or dead.
+    
+"""
