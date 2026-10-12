@@ -1,5 +1,5 @@
 """
-21. TensorBoard Integration and Model Monitoring in PyTorch
+19. TensorBoard Integration and Model Monitoring in PyTorch
 
 This script demonstrates how to integrate PyTorch's native TensorBoard 
 SummaryWriter to monitor and visualize training runs in real-time. It covers 
@@ -148,8 +148,7 @@ if __name__ == "__main__":
     main()
 
 
-"""===
-
+"""
 1. IMAGES TAB
    - Core Function: writer.add_image("sample_images", img_grid)
    - What It Shows: Visual grid preview of input dataset batches (e.g., FashionMNIST items).
@@ -172,7 +171,6 @@ if __name__ == "__main__":
      by displaying downward-trending loss curves over time.
     Detects underfitting, overfitting, or improper learning rate settings 
      by monitoring optimization convergence.
-
 
 4. HISTOGRAMS TAB (Parameter Weights & Gradients)
    - Core Function: writer.add_histogram("Parameters/...", param, epoch)

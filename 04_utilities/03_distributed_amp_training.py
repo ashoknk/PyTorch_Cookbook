@@ -1,5 +1,5 @@
 """
-23. Distributed Data Parallel (DDP) and Mixed Precision (AMP) in PyTorch
+21. Distributed Data Parallel (DDP) and Mixed Precision (AMP) in PyTorch
 
 This script demonstrates high-performance training scaling in PyTorch. It 
 implements Automatic Mixed Precision (AMP) using GradScaler and autocast (which 
@@ -15,12 +15,8 @@ Learning Objectives:
 
 import os
 
-# We import the core torch library.
 import torch
-
-# nn contains container classes.
 import torch.nn as nn
-
 # optim contains parameter optimization algorithms (SGD).
 import torch.optim as optim
 

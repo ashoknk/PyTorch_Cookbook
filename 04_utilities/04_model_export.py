@@ -1,5 +1,5 @@
 """
-24. Model Compilation & Export (TorchScript and ONNX) in PyTorch
+22. Model Compilation & Export (TorchScript and ONNX) in PyTorch
 
 This script demonstrates how to transition PyTorch models from research/training 
 environments to production serving. We compile a trained model using TorchScript 
@@ -15,8 +15,6 @@ Learning Objectives:
 """
 
 import os
-
-# We import the core torch library.
 import torch
 
 # nn contains neural layers.

@@ -1,5 +1,5 @@
 """
-22. Learning Rate Schedulers & Hyperparameter Tuning in PyTorch
+20. Learning Rate Schedulers & Hyperparameter Tuning in PyTorch
 
 The main purpose of a Learning Rate Scheduler script is to show how to automatically adjust the step size 
 (learning rate) of your optimizer as training progresses, 

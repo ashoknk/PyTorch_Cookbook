@@ -1,5 +1,5 @@
 """
-26. Parameter-Efficient Fine-Tuning (LoRA from Scratch) in PyTorch
+24. Parameter-Efficient Fine-Tuning (LoRA from Scratch) in PyTorch
 
 This script demonstrates Low-Rank Adaptation (LoRA), a popular Parameter-Efficient 
 Fine-Tuning (PEFT) methodology. LoRA freezes pre-trained weight matrices and injects 
