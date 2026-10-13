@@ -49,6 +49,7 @@ def compare_schedulers():
     print("--- 1. Initializing PyTorch LR Schedulers ---")
     
     # All schedulers must be coupled with an active optimizer instance
+    #Documentation: https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
     opt1 = torch.optim.SGD(model.parameters(), lr=0.1)
     opt2 = torch.optim.SGD(model.parameters(), lr=0.1)
     opt3 = torch.optim.SGD(model.parameters(), lr=0.1)
@@ -96,6 +97,8 @@ def compare_schedulers():
     formatted = [f"{x:.2f}" for x in simulated_losses]
     print(f"simulated_losses: {formatted}")
 
+    #Documentation: https://docs.pytorch.org/docs/2.14/generated/torch.optim.SGD.html
+    # param_groups: a List containing all parameter groups where each
     for epoch in range(30):
         # 2.1 Track current learning rates from optimizer parameter groups
         step_lrs.append(opt1.param_groups[0]['lr'])
