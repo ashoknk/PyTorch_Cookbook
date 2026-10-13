@@ -35,7 +35,7 @@ def benchmark_mac_acceleration():
         
         # Warm-up pass
         _ = torch.matmul(x_mps, y_mps)
-        torch.mps.synchronize()  # Ensure GPU operations complete for timing
+        torch.mps.synchronize()  # Ensure GPU operations complete for timing before starting the timer
         
         start_time = time.time()
         _ = torch.matmul(x_mps, y_mps)

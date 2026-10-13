@@ -1,6 +1,20 @@
 """
 24 - 06. Parameter-Efficient Fine-Tuning (LoRA from Scratch) in PyTorch
 
+LOW-RANK ADAPTATION (LoRA) is a Parameter-Efficient Fine-Tuning (PEFT) method that leaves the original 
+base model frozen and attaches tiny, trainable "sticky note" adapter matrices.
+
+How It Works:
+1. Freeze Base Model: Locks pre-trained weight matrices so they never change.
+2. Inject Matrix Pairs (A & B): Adds two slim, low-rank matrices alongside the frozen layer.
+3. Low-Rank Trick: Multiplying (x @ A) @ B computes the needed output adjustments 
+   using a tiny fraction of the total parameters.
+
+Key Benefits:
+- Low VRAM Usage: Trains < 1% of total parameters, enabling LLM fine-tuning on consumer GPUs.
+- Small Checkpoints: Saves adapter files in MBs rather than multi-gigabyte full model dumps.
+- Dynamic Swapping: Keeps one base model in memory and swaps small adapters per task.
+
 This script demonstrates Low-Rank Adaptation (LoRA), a popular Parameter-Efficient 
 Fine-Tuning (PEFT) methodology. LoRA freezes pre-trained weight matrices and injects 
 pairs of trainable low-rank decomposition matrices (A and B) into linear layers. 
