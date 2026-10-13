@@ -11,6 +11,7 @@ data/MNIST
 data/cifar-10-batches-py
 data/hub/*
 data/tensorboard*.png
+data/export/*
 
 runs/*
 

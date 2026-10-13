@@ -1,17 +1,23 @@
 """
-22. Model Compilation & Export (TorchScript and ONNX) in PyTorch
+22. Modern Model Compilation & Export (torch.export and ONNX) in PyTorch
 
-This script demonstrates how to transition PyTorch models from research/training 
-environments to production serving. We compile a trained model using TorchScript 
-tracing (creating JIT compiler structures to bypass Python runtime limits) 
-and export the model architecture to ONNX (Open Neural Network Exchange) format 
-for cross-platform and language-agnostic deployment.
+"I trained a model in PyTorch on Python File/Jupyter/Colab... 
+how do I actually put this into a C++ app, a web server, a mobile app, or TensorRT?"
+
+The main purpose of this code is to show how to take a trained PyTorch model 
+out of Python so it can be deployed to real-world production environments—such as 
+C++ apps, web servers, mobile devices, or hardware accelerators (like NVIDIA TensorRT) 
+
+Python can be too slow or heavy for live applications. This script solves that by 
+exporting the model into standalone files (.pt2 and .onnx) that run fast, efficiently, 
+and independently of Python runtime limitations.
 
 Learning Objectives:
-1. Compile models using JIT Tracing (torch.jit.trace).
-2. Save compiled serialized TorchScript models (.pt).
-3. Export PyTorch layers to standard ONNX representations (torch.onnx.export).
-4. Verify execution consistency of exported models.
+1. Capture PyTorch 2.x computational graphs into standalone artifacts using torch.export.export().
+2. Save and reload compiled PyTorch 2.x exported models (.pt2) to disk.
+3. Define dynamic shapes (dynamic_shapes) so exported models can handle flexible batch sizes in production.
+4. Export neural network layers to cross-platform ONNX representations (torch.onnx.export).
+5. Verify that predictions from exported models remain mathematically identical to the original PyTorch model.
 """
 
 import os
@@ -19,6 +25,8 @@ import torch
 
 # nn contains neural layers.
 import torch.nn as nn
+from torch.export import Dim
+import onnxruntime as ort
 
 # Define simple classification model for serialization
 class SimpleImageClassifier(nn.Module):
@@ -36,6 +44,8 @@ class SimpleImageClassifier(nn.Module):
         x = x.view(x.size(0), -1)
         return self.classifier(x)
 
+FOLDER_EXPORT= "./data/export/"
+
 def main():
     print("--- 1. Preparing Model for Export ---")
     model = SimpleImageClassifier()
@@ -46,23 +56,20 @@ def main():
     dummy_input = torch.randn(1, 1, 28, 28)
 
     # Make directories to store production artifacts
-    os.makedirs("./export", exist_ok=True)
+    os.makedirs(FOLDER_EXPORT, exist_ok=True)
 
     # ==========================================
-    # 2. TORCHSCRIPT JIT TRACING
+    # 2. TORCHSCRIPT TRACING. PT2 EXPORT
     # ==========================================
     print("\n--- 2. Compiling with TorchScript Tracing ---")
     
-    # torch.jit.trace runs the dummy input through the model and captures
-    # the execution graph. This is highly efficient for models with static control flows.
-    # Documentation: https://pytorch.org/docs/stable/jit.html#torch.jit.trace
-    traced_model = torch.jit.trace(model, dummy_input)
+    # torch.export.export captures the graph structure of the model for PyTorch 2.x+
+    exported_program = torch.export.export(model, (dummy_input,))
     
-    # Save the compiled JIT model to disk. It can now be loaded directly in C++
-    # without any Python dependency!
-    torchscript_path = "./export/classifier_traced.pt"
-    torch.jit.save(traced_model, torchscript_path)
-    print(f"  Traced model saved to: {torchscript_path}")
+    # Save the exported model (.pt2) to disk
+    export_path_pt2 = os.path.join(FOLDER_EXPORT, "classifier_exported.pt2")
+    torch.export.save(exported_program, export_path_pt2)
+    print(f"  Exported model saved to: {export_path_pt2}")
 
     # ==========================================
     # 3. ONNX EXPORT
@@ -72,18 +79,23 @@ def main():
     # torch.onnx.export translates PyTorch layers to ONNX intermediate representation ops,
     # allowing serving in ONNXRuntime, TensorRT, or open-source edge hardware.
     # Documentation: https://pytorch.org/docs/stable/onnx.html#torch.onnx.export
-    onnx_path = "./export/classifier.onnx"
+    onnx_path = os.path.join(FOLDER_EXPORT, "classifier.onnx")
+
+    # Define dynamic dimension symbol using PyTorch's export module
+    batch_dim = torch.export.Dim("batch_size")
+    dynamic_shapes = {"x": {0: batch_dim}}
+
     torch.onnx.export(
-        model,               # Model to export
-        dummy_input,         # Example input tensor
-        onnx_path,           # Destination file
-        export_params=True,  # Save model weights inside the file
-        opset_version=15,    # Target ONNX standard opset version
-        input_names=['input'],   # Name input layer
-        output_names=['output'], # Name output layer
-        # Specify dynamic axes if batch size can change during inference
-        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}}
+        model,
+        dummy_input,
+        onnx_path,
+        export_params=True,
+        opset_version=18,
+        input_names=['input'],
+        output_names=['output'],
+        dynamic_shapes=dynamic_shapes
     )
+
     print(f"  ONNX model exported to: {onnx_path}")
 
     # ==========================================
@@ -91,21 +103,46 @@ def main():
     # ==========================================
     print("\n--- 4. Verifying Compiled Model Consistency ---")
     
-    # Run predictions with the original PyTorch model
+    # 4.1 Run predictions with original PyTorch model
     with torch.no_grad():
         original_output = model(dummy_input)
 
-    # Load and run predictions with the saved TorchScript model
-    loaded_jit = torch.jit.load(torchscript_path)
+    # 4.2 Verify PyTorch 2.x Exported Model (.pt2). Load and run predictions with the saved torch.export model
+    loaded_program = torch.export.load(export_path_pt2)
+    loaded_module = loaded_program.module()
     with torch.no_grad():
-        jit_output = loaded_jit(dummy_input)
+        exported_output = loaded_module(dummy_input)
 
     # Verify that outputs are mathematically identical
-    diff = torch.abs(original_output - jit_output).max().item()
-    print(f"  Max difference between PyTorch and JIT predictions: {diff}")
+    diff = torch.abs(original_output - exported_output).max().item()
+    print(f"  Max difference between PyTorch and Exported predictions: {diff}")
     
-    assert diff < 1e-6, "Compiled TorchScript output deviates from original model!"
-    print("JIT tracing and ONNX compilation verified successfully!")
+    assert diff < 1e-6, "Exported model output deviates from original model!"
+    print("Modern torch.export and ONNX compilation verified successfully!")
+
+    # 4.3 Verify ONNX Model (.onnx) using ONNX Runtime
+    try:
+        
+        # Create ONNX Runtime session. 
+        # ort.InferenceSession is the primary class used to load, configure, and execute compiled ONNX ML models
+        ort_session = ort.InferenceSession(onnx_path)
+        
+        # ONNX Runtime requires inputs as NumPy arrays mapped to input layer names
+        onnx_inputs = {ort_session.get_inputs()[0].name: dummy_input.numpy()}
+        onnx_output = ort_session.run(None, onnx_inputs)[0]
+
+        # Convert ONNX numpy array output to PyTorch tensor for comparison
+        onnx_output_tensor = torch.from_numpy(onnx_output)
+        
+        onnx_diff = torch.abs(original_output - onnx_output_tensor).max().item()
+        print(f"  Max difference (PyTorch vs. .onnx Export): {onnx_diff:.6f}")
+        assert onnx_diff < 1e-5, "Exported ONNX model output deviates from original PyTorch model!"
+
+        print("\nBoth PyTorch 2.x (.pt2) and ONNX (.onnx) exports verified successfully!")
+
+    except ImportError:
+        print("  [INFO] 'onnxruntime' is not installed. Skipping ONNX runtime verification.")
+        print("  Install it via 'pip install onnxruntime' to enable ONNX validation.")    
 
 if __name__ == "__main__":
     main()
