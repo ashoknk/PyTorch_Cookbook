@@ -16,9 +16,7 @@ Learning Objectives:
 
 import math
 
-# We import the core torch library.
 import torch
-
 # nn contains the neural network layers (Linear) and parameters.
 import torch.nn as nn
 
