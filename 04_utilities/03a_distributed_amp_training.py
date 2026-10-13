@@ -3,8 +3,8 @@
 
 To demonstrate two production-grade training optimization techniques:
      1. Automatic Mixed Precision (AMP): Speeds up matrix math and cuts VRAM usage by 
-        dynamically running compatible operations in 16-bit floating point (FP16/BF16)[cite: 3].
-     2. Distributed Data Parallel (DDP): Scales training across multiple GPUs/servers[cite: 3].
+        dynamically running compatible operations in 16-bit floating point (FP16/BF16).
+     2. Distributed Data Parallel (DDP): Scales training across multiple GPUs/servers.
 
 This script demonstrates high-performance training scaling in PyTorch. It 
 implements Automatic Mixed Precision (AMP) using GradScaler and autocast (which 
