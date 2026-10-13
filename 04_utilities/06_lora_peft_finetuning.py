@@ -1,5 +1,5 @@
 """
-24. Parameter-Efficient Fine-Tuning (LoRA from Scratch) in PyTorch
+24 - 06. Parameter-Efficient Fine-Tuning (LoRA from Scratch) in PyTorch
 
 This script demonstrates Low-Rank Adaptation (LoRA), a popular Parameter-Efficient 
 Fine-Tuning (PEFT) methodology. LoRA freezes pre-trained weight matrices and injects 
@@ -29,7 +29,9 @@ class LoraLinear(nn.Module):
         Args:
             base_layer (nn.Linear): The pre-trained linear layer to wrap and freeze.
             r (int): The rank of the low-rank decomposition (r << in_features).
-            alpha (int): The scaling hyperparameter.
+                Defaults follow common PEFT convention; pick a smaller r for small layers.
+            alpha (int): The scaling hyperparameter. Only the alpha/r ratio matters,
+                so r=8/alpha=16 and r=4/alpha=8 both scale the adapter by 2.0.
         """
         super(LoraLinear, self).__init__()
         self.base_layer = base_layer
@@ -39,18 +41,24 @@ class LoraLinear(nn.Module):
         self.scaling = alpha / r
         
         # Freeze the pre-trained base linear layer's weights
+        # Setting requires_grad = False tells PyTorch’s autograd engine to disable gradient calculation 
+        # for these tensors during backpropagation, keeping the pre-trained weights frozen
         for param in self.base_layer.parameters():
             param.requires_grad = False
             
-        # Initialize Low-Rank matrices: A and B
-        # Matrix A maps: in_features -> r (initialized with Gaussian values)
-        # Matrix B maps: r -> out_features (initialized with zeros, so adapter starts as identity 0)
+        # Initialize Low-Rank matrices: A and B. They are needed to drastically reduce parameter counts via low-rank matrix decomposition
+        # lora_A Matrix A maps: in_features -> r (initialized with Gaussian values). 
+        # Shape (10, 4) --> 40 parameters.
+        # Shape (4, 64) --> 40 parameters.
+        # lora_B Matrix B maps: r -> out_features (initialized with zeros, so adapter starts as identity 0)
         self.lora_A = nn.Parameter(torch.zeros(base_layer.in_features, r))
         self.lora_B = nn.Parameter(torch.zeros(r, base_layer.out_features))
         
         # Standard Gaussian/Kaiming initialization of matrix A
+        # Kaiming Uniform initializes weights with a variance, randomized values at startup so that gradients can flow properly during backpropagation. 
         nn.init.kaiming_uniform_(self.lora_A, a=math.sqrt(5))
         # Matrix B is zero-initialized so the adapter initially adds nothing to the base layer's outputs
+        # By initializing lora_B to all zeros, A X B = 0 at initialization
         nn.init.zeros_(self.lora_B)
 
     def forward(self, x):
@@ -92,6 +100,8 @@ def main():
     # ==========================================
     print("\n--- 2. Injecting LoRA Adapters into fc1 & fc2 layers ---")
     # Wrap self.fc1 and self.fc2 in our LoraLinear adapters
+    # Replace the original nn.Linear layers (model.fc1 and model.fc2) with instances of the LoraLinear wrapper i.e Small matrix pairs A and B
+    # The low-rank matrices lora_A and lora_B are dynamically attached alongside the original layer.
     model.fc1 = LoraLinear(model.fc1, r=4, alpha=8)
     model.fc2 = LoraLinear(model.fc2, r=4, alpha=8)
     print(model)
@@ -105,8 +115,9 @@ def main():
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     frozen_params = sum(p.numel() for p in model.parameters() if not p.requires_grad)
     
-    print(f"Trainable Parameters (adapters only): {trainable_params:,}")
-    print(f"Frozen Parameters (base network only): {frozen_params:,}")
+    print(f"Trainable/LoRA Parameters (adapters only): {trainable_params:,}")
+    print(f"Frozen/Base Parameters (base network only): {frozen_params:,}")
+    # % of the total model parameters in memory that are trainable, while the remaining % are frozen base parameters
     print(f"Adapter parameter density: {100 * trainable_params / (trainable_params + frozen_params):.2f}%")
 
     # Verify that only the adapters (lora_A, lora_B) have requires_grad=True

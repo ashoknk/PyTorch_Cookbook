@@ -1,5 +1,5 @@
 """
-23. Web API Model Serving (FastAPI and JIT) in PyTorch
+23 - 05 . Web API Model Serving (FastAPI and JIT) in PyTorch
 
 This script demonstrates how to deploy a compiled PyTorch model as a high-performance, 
 production-ready web service endpoint using the FastAPI framework. We load our 
