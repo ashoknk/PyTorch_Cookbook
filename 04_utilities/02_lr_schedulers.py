@@ -11,10 +11,8 @@ rather than keeping it fixed at the same number the entire time.
    - Best Used When: You want simple, predictable, scheduled drops at fixed intervals.
 
 2. CosineAnnealingLR
-   - How It Adjusts Speed: Smoothly lowers (and optionally raises) speed following 
-     a soft cosine wave curve.
-   - Best Used When: You are training modern deep networks (like CNNs or Transformers) 
-     for maximum accuracy.
+   - How It Adjusts Speed: Smoothly lowers (and optionally raises) speed following a soft cosine wave curve.
+   - Best Used When: You are training modern deep networks (like CNNs or Transformers) for maximum accuracy.
 
 3. ReduceLROnPlateau
    - How It Adjusts Speed: Monitors validation loss. If loss stops improving for a 
@@ -35,8 +33,6 @@ Learning Objectives:
 
 # We import the core torch library.
 import torch
-
-# nn contains foundational neural network layers.
 import torch.nn as nn
 
 # lr_scheduler contains all standard learning rate adaptation strategies.
@@ -66,8 +62,7 @@ def compare_schedulers():
     # Highly popular for state-of-the-art vision models.
     #   T_max=30: Smoothly reduces LR over a 30-epoch cycle.
     #             Tells the scheduler how long it should take to smoothly lower the LR.
-    #   eta_min=0.001: 
-    #             Sets a floor so LR drops to 0.001 instead of stopping at 0.0
+    #   eta_min=0.001: Sets a floor so LR drops to 0.001 instead of stopping at 0.0
     # Documentation: https://pytorch.org/docs/stable/generated/torch.optim.lr_scheduler.CosineAnnealingLR.html
     scheduler_cosine = lr_scheduler.CosineAnnealingLR(opt2, T_max=30, eta_min=0.001)
 
