@@ -35,6 +35,7 @@ from torch.amp import autocast, GradScaler
 import torch.distributed as dist
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data import DataLoader, TensorDataset
+from torch.nn.parallel import DistributedDataParallel
 
 def setup_distributed(rank, world_size):
     """Initializes the distributed communications process group.
@@ -75,9 +76,9 @@ def train_worker(rank, world_size):
     ).to(device)
 
     if torch.cuda.is_available():
-        model = nn.parallel.DistributedDataParallel(base_model, device_ids=[rank])
+        model = DistributedDataParallel(base_model, device_ids=[rank])
     else:
-        model = nn.parallel.DistributedDataParallel(base_model)
+        model = DistributedDataParallel(base_model)
 
     criterion = nn.MSELoss()
     optimizer = optim.SGD(model.parameters(), lr=0.01)
