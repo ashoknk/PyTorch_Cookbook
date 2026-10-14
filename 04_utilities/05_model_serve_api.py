@@ -22,7 +22,8 @@ import torchvision.transforms as transforms
 
 # PIL handles reading incoming image byte streams.
 from PIL import Image
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager 
+#asynchronous context manager allowing us to perform non-blocking I/O operations (like database connections or network requests) 
 
 # FastAPI and Uvicorn provide high-speed, asynchronous ASGI web services.
 # Documentation: https://fastapi.tiangolo.com/
@@ -45,6 +46,7 @@ transform_pipeline = transforms.Compose([
 # FastAPI life-cycle events. We load the model once during application startup.
 
 # Define modern FastAPI lifespan event handler
+# logic (code) that should be executed before the application starts up. 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- STARTUP ACTIONS ---
