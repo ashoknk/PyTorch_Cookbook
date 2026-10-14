@@ -43,15 +43,6 @@ transform_pipeline = transforms.Compose([
 ])
 
 # FastAPI life-cycle events. We load the model once during application startup.
-# @app.on_event("startup")
-# def load_production_model():
-#     global model
-#     model_path = "./export/classifier_traced.pt"
-#     # Load JIT-compiled TorchScript model
-#     # Documentation: https://pytorch.org/docs/stable/generated/torch.jit.load.html
-#     model = torch.jit.load(model_path)
-#     model.eval()  # Set to evaluation mode to ensure static layers (dropout, batchnorm) behave correctly
-#     print(f"--- Production TorchScript model loaded from {model_path} ---")
 
 # Define modern FastAPI lifespan event handler
 @asynccontextmanager
