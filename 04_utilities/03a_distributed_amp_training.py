@@ -88,6 +88,7 @@ def train_worker(rank, world_size):
     # -------------------------------------------------------------
     X = torch.randn(10000, 512)
     y = torch.randn(10000, 128)
+    # dataset class that wraps one or more tensors of the same length
     dataset = TensorDataset(X, y)
     
     sampler = DistributedSampler(dataset, num_replicas=world_size, rank=rank, shuffle=True)
@@ -131,7 +132,7 @@ def train_worker(rank, world_size):
             # Multiply by a large factor, so they don't round down to zero
             scaler.scale(loss).backward()
             scaler.step(optimizer)
-            # Dynamically adjusts (increase) the scaling factor for the next iteration 
+            # Dynamically adjusts the scaling factor for the next iteration 
             scaler.update()
 
     # -------------------------------------------------------------
