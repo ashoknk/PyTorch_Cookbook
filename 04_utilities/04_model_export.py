@@ -8,9 +8,13 @@ The main purpose of this code is to show how to take a trained PyTorch model
 out of Python so it can be deployed to real-world production environments—such as 
 C++ apps, web servers, mobile devices, or hardware accelerators (like NVIDIA TensorRT) 
 
-Python can be too slow or heavy for live applications. This script solves that by 
-exporting the model into standalone files (.pt2 and .onnx) that run fast, efficiently, 
-and independently of Python runtime limitations.
+Use .pt2 when your entire deployment and execution stack remains inside the PyTorch ecosystem or relies on PyTorch-native compilation pipelines.
+• PyTorch-Native Inference: 
+You are running inference with PyTorch 2.x, torch.compile, or AOTInductor C++ wrappers
+
+Use .onnx when you need to escape the Python/PyTorch runtime dependency and run your model across different frameworks or high-speed hardware backends.
+• Cross-Platform / Cross-Framework Deployment: 
+You need to run a model trained in PyTorch inside another framework (like C++, C#, Java, or TensorRT/DirectML environments).
 
 Learning Objectives:
 1. Capture PyTorch 2.x computational graphs into standalone artifacts using torch.export.export().
@@ -82,6 +86,7 @@ def main():
     onnx_path = os.path.join(FOLDER_EXPORT, "classifier.onnx")
 
     # Define dynamic dimension symbol using PyTorch's export module
+    # Passing dynamic_shapes tells the exporter explicitly not to hardcode those dimensions
     batch_dim = torch.export.Dim("batch_size")
     dynamic_shapes = {"x": {0: batch_dim}}
 
@@ -107,7 +112,7 @@ def main():
     with torch.no_grad():
         original_output = model(dummy_input)
 
-    # 4.2 Verify PyTorch 2.x Exported Model (.pt2). Load and run predictions with the saved torch.export model
+    # ========= 4.2 Verify PyTorch 2.x Exported Model (.pt2). Load and run predictions with the saved torch.export model
     loaded_program = torch.export.load(export_path_pt2)
     loaded_module = loaded_program.module()
     with torch.no_grad():
@@ -120,7 +125,7 @@ def main():
     assert diff < 1e-6, "Exported model output deviates from original model!"
     print("Modern torch.export and ONNX compilation verified successfully!")
 
-    # 4.3 Verify ONNX Model (.onnx) using ONNX Runtime
+    # ========= 4.3 Verify ONNX Model (.onnx) using ONNX Runtime
     try:
         
         # Create ONNX Runtime session. 

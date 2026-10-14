@@ -31,6 +31,7 @@ import uvicorn
 
 # Global variable to store our loaded TorchScript model
 model = None
+FOLDER_EXPORT= "./data/export/"
 
 # We define standard vision transformations matching our training data (FashionMNIST).
 # Documentation: https://pytorch.org/vision/stable/transforms.html
@@ -59,7 +60,7 @@ async def lifespan(app: FastAPI):
     global model
     # The loader below is torch.export, so this must be a .pt2 archive.
     # A TorchScript .pt file requires torch.jit.load instead.
-    model_path = "./data/export/classifier_exported.pt2"
+    model_path = f"{FOLDER_EXPORT}/classifier_exported.pt2"
     
     # Load model into memory when server starts
     # Load PyTorch 2.x exported program
