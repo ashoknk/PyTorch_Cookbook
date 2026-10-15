@@ -12,7 +12,6 @@ How It Works:
 
 Key Benefits:
 - Low VRAM Usage: Trains < 1% of total parameters, enabling LLM fine-tuning on consumer GPUs.
-- Small Checkpoints: Saves adapter files in MBs rather than multi-gigabyte full model dumps.
 - Dynamic Swapping: Keeps one base model in memory and swaps small adapters per task.
 
 This script demonstrates Low-Rank Adaptation (LoRA), a popular Parameter-Efficient 
@@ -63,7 +62,7 @@ class LoraLinear(nn.Module):
         # Initialize Low-Rank matrices: A and B. They are needed to drastically reduce parameter counts via low-rank matrix decomposition
         # lora_A Matrix A maps: in_features -> r (initialized with Gaussian values). 
         # Shape (10, 4) --> 40 parameters.
-        # Shape (4, 64) --> 40 parameters.
+        # Shape (4, 64) --> 256 parameters.
         # lora_B Matrix B maps: r -> out_features (initialized with zeros, so adapter starts as identity 0)
         self.lora_A = nn.Parameter(torch.zeros(base_layer.in_features, r))
         self.lora_B = nn.Parameter(torch.zeros(r, base_layer.out_features))
@@ -153,6 +152,7 @@ def main():
     optimizer = torch.optim.Adam(trainable_list, lr=0.01)
 
     # Capture initial weights of frozen fc1 to confirm they do NOT change
+    # .detach() is used to cut the tensor off from PyTorch's computational graph. Copied tensor has no gradient history
     initial_fc1_weight = model.fc1.base_layer.weight.clone().detach()
 
     # Perform a single optimization step
