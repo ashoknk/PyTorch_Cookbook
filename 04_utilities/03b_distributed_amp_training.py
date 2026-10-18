@@ -1,5 +1,5 @@
 """
-21 -3b. Demonstrating Matrix Math Acceleration on Apple Silicon (MPS)
+22 -3b. Demonstrating Matrix Math Acceleration on Apple Silicon (MPS)
 """
 
 import time

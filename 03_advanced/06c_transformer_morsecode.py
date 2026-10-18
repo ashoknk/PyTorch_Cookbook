@@ -1,5 +1,5 @@
 """
-Morse Code to Text Translation using PyTorch Transformer
+ 18 - 6c. Morse Code to Text Translation using PyTorch Transformer
 
 PURPOSE:
 This script implements a complete sequence-to-sequence translation system that converts

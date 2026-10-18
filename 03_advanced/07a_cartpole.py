@@ -1,5 +1,5 @@
 """
- 18 - 07a. CARTPOLE-v1 RL ENVIRONMENT AND TRAINING PARAMETERS:
+19 - 07a. CARTPOLE-v1 RL ENVIRONMENT AND TRAINING PARAMETERS:
 
 Gymnasium is an open-source Python library that provides a standardized API 
 for developing, testing, and benchmarking single-agent reinforcement learning (RL) algorithms.

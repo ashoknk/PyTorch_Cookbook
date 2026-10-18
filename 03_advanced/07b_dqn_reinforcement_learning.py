@@ -1,5 +1,5 @@
 """
- 18 - 07b. Deep Q-Network (DQN) Reinforcement Learning in PyTorch
+19 - 07b. Deep Q-Network (DQN) Reinforcement Learning in PyTorch
 
 The `QNetwork` is a neural network that takes the current game state as input and outputs estimated future 
 reward scores (Q-values) for every possible move. It acts as the agent's brain, allowing it to choose 

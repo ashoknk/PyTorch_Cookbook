@@ -1,5 +1,5 @@
 """
-19. TensorBoard Integration and Model Monitoring in PyTorch
+20. TensorBoard Integration and Model Monitoring in PyTorch
 
 This script demonstrates how to integrate PyTorch's native TensorBoard 
 SummaryWriter to monitor and visualize training runs in real-time. It covers 

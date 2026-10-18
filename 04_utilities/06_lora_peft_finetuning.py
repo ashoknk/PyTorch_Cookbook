@@ -1,5 +1,5 @@
 """
-24 - 06. Parameter-Efficient Fine-Tuning (LoRA from Scratch) in PyTorch
+25 - 06. Parameter-Efficient Fine-Tuning (LoRA from Scratch) in PyTorch
 
 LOW-RANK ADAPTATION (LoRA) is a Parameter-Efficient Fine-Tuning (PEFT) method that leaves the original 
 base model frozen and attaches tiny, trainable "sticky note" adapter matrices.

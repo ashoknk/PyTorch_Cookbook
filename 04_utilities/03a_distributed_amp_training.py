@@ -1,5 +1,5 @@
 """
-21 -3a. Distributed Data Parallel (DDP) and Mixed Precision (AMP) in PyTorch
+22 -3a. Distributed Data Parallel (DDP) and Mixed Precision (AMP) in PyTorch
 
 To demonstrate two production-grade training optimization techniques:
      1. Automatic Mixed Precision (AMP): Speeds up matrix math and cuts VRAM usage by 

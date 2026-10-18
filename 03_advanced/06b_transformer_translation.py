@@ -1,5 +1,5 @@
 """
-18. Complete Transformer Training Using PyTorch's Built-in nn.Transformer
+18 - 6b. Complete Transformer Training Using PyTorch's Built-in nn.Transformer
 
 
 This script demonstrates how to use PyTorch's built-in nn.Transformer directly for a complete English-French translation task.

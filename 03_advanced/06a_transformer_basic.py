@@ -1,5 +1,5 @@
 """
-06a_transformer_basic - THE ABSOLUTE BEGINNER'S STEPPING STONE
+18 - 6a. Transformer Basic - THE ABSOLUTE BEGINNER'S STEPPING STONE
 
 `nn.Transformer` is PyTorch’s built-in block that mixes information between words 
 in a sentence using attention mechanisms. 
