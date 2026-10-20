@@ -16,3 +16,5 @@ data/export/*
 runs/*
 
 bk/*
+
+*.json
